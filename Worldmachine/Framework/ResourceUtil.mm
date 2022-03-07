@@ -21,16 +21,19 @@ namespace worldmachine {
 		return {};
 	}
 	
-	MTL::Texture* loadTextureFromFile(MTL::Device* _device, std::string_view filename) {
-		NSURL* imgURL = [NSBundle.mainBundle URLForImageResource:[NSString stringWithCString: filename.data() encoding: NSUTF8StringEncoding]];
+	MTL::Texture* loadTextureFromFile(MTL::Device* _device, std::filesystem::path filename, std::string_view extension) {
+		NSURL *imgURL = [[NSURL alloc] initFileURLWithPath: toNSString(pathForResource(filename, extension).data())];
 		
 		id<MTLDevice> device = (__bridge id<MTLDevice>)_device;
 		
 		MTKTextureLoader* textureLoader = [[MTKTextureLoader alloc] initWithDevice:device];
 		id<MTLTexture> texture = [textureLoader newTextureWithContentsOfURL:imgURL options:@{MTKTextureLoaderOptionSRGB: @true} error:NULL];
 		
-		
-		return (MTL::Texture*)CFBridgingRetain(texture);
+		MTL::Texture* result = (MTL::Texture*)CFBridgingRetain(texture);
+		if (!result) {
+			WM_Log(error, "Failed to load Texture {}", filename);
+		}
+		return result;
 	}
 	
 	std::string pathForResource(std::filesystem::path name, std::string_view type) {

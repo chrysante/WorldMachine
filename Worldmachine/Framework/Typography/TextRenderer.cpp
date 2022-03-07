@@ -46,31 +46,30 @@ namespace {
 
 namespace worldmachine {
 	
-	TextRenderer::TextRenderer(TypeSetter const& typeSetter, Device* device) {
-		
-		
-		
-		Font::forEach([&](Font font) {
-			for (auto size: { 8, 16, 32, 64, 128, 256 }) {
-				GlyphRenderData& glyphRenderData = _glyphRenderData[{ font, size }];
-				auto const atlasName = TypeSetter::resourceName(font, size);
-				glyphRenderData.atlas = loadTextureFromFile(device, atlasName);
-				auto& fontData = typeSetter._fontData.at({ font, size });
-				FontData const metAtl = {
-					typeSetter._fontData.at({ font, size }).metrics,
-					typeSetter._fontData.at({ font, size }).atlasData
-				};
-				glyphRenderData.fontDataBuffer = device->newBuffer(&metAtl,
-																   sizeof(FontData),
-																   ResourceStorageModeManaged);
-				glyphRenderData.glyphDataBuffer = device->newBuffer(fontData.glyphData.data(),
-																	fontData.glyphData.size() * sizeof(GlyphData),
-																	ResourceStorageModeManaged);
-			}
-		});
-		
+	TextRenderer::TextRenderer(TypeSetter const* typeSetter, Device* device) {
+		this->typeSetter = typeSetter;
+		this->device = device;
+
 		_samplerState = createSamplerState(device);
 		_vertexBuffer = createVertexBuffer(device);
+	}
+	
+	TextRenderer::GlyphRenderData TextRenderer::loadGlyphRenderData(Device* device, Font font, std::size_t size) {
+		GlyphRenderData glyphRenderData;
+		auto const atlasName = TypeSetter::resourceName(font, size);
+		glyphRenderData.atlas = loadTextureFromFile(device, std::filesystem::path{ "Font" } / atlasName, "png");
+		auto& fontData = typeSetter->_fontData.at({ font, size });
+		FontData const metAtl = {
+			typeSetter->_fontData.at({ font, size }).metrics,
+			typeSetter->_fontData.at({ font, size }).atlasData
+		};
+		glyphRenderData.fontDataBuffer = device->newBuffer(&metAtl,
+														   sizeof(FontData),
+														   ResourceStorageModeManaged);
+		glyphRenderData.glyphDataBuffer = device->newBuffer(fontData.glyphData.data(),
+															fontData.glyphData.size() * sizeof(GlyphData),
+															ResourceStorageModeManaged);
+		return glyphRenderData;
 	}
 	
 	RenderPipelineState* TextRenderer::createPipelineState(Device* device, Library* library,
@@ -81,6 +80,19 @@ namespace worldmachine {
 		
 		NS::Error* errors;
 		return device->newRenderPipelineState(desc.get(), &errors);
+	}
+	
+	TextRenderer::GlyphRenderData const* TextRenderer::glyphRenderData(Font font, std::size_t size) {
+		auto const itr = _glyphRenderData.find({ font, size });
+		if (itr == _glyphRenderData.end()) {
+			[[maybe_unused]] auto [newItr, success] =_glyphRenderData.insert_or_assign({font, size}, loadGlyphRenderData(device, font, size));
+			bool _success = success;
+			WM_Assert(_success, "Failed to insert Glyph Render Data");
+			return &newItr->second;
+		}
+		else {
+			return &itr->second;
+		}
 	}
 	
 }

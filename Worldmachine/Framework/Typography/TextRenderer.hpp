@@ -11,7 +11,7 @@ namespace worldmachine {
 	
 	class TextRenderer {
 	public:
-		TextRenderer(TypeSetter const&, MTL::Device* device);
+		TextRenderer(TypeSetter const*, MTL::Device* device);
 		
 	public:
 		MTL::RenderPipelineState* createPipelineState(MTL::Device*, MTL::Library*,
@@ -25,16 +25,10 @@ namespace worldmachine {
 			MTLARCPointer<MTL::Buffer> fontDataBuffer;
 		};
 
+		GlyphRenderData loadGlyphRenderData(MTL::Device* device, Font, std::size_t size);
+		
 	public:
-		GlyphRenderData const* glyphRenderData(Font font, std::size_t size) const {
-			auto const itr = _glyphRenderData.find({ font, size });
-			if (itr == _glyphRenderData.end()) {
-				return nullptr;
-			}
-			else {
-				return &itr->second;
-			}
-		}
+		GlyphRenderData const* glyphRenderData(Font font, std::size_t size);
 
 		MTL::SamplerState const* samplerState() const { return _samplerState.get(); }
 		MTL::Buffer const* vertexBuffer() const { return _vertexBuffer.get(); }
@@ -43,6 +37,8 @@ namespace worldmachine {
 		utl::hashmap<std::pair<Font, std::size_t>, GlyphRenderData, utl::hash<std::pair<Font, std::size_t>>> _glyphRenderData;
 		MTLARCPointer<MTL::SamplerState> _samplerState;
 		MTLARCPointer<MTL::Buffer> _vertexBuffer;
+		TypeSetter const* typeSetter;
+		MTL::Device* device;
 	};
 	
 }

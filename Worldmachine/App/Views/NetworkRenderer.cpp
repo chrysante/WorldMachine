@@ -22,7 +22,7 @@ namespace worldmachine {
 		useDepthBuffer = true;
 		/// TODO: expose this in the API
 		MSAA = 1;
-		textRenderer = utl::make_ref<TextRenderer>(*typeSetter, device.get());
+		textRenderer = utl::make_ref<TextRenderer>(typeSetter.get(), device.get());
 		
 		MTLARCPointer dsDesc = DepthStencilDescriptor::alloc()->init();
 		dsDesc->setDepthWriteEnabled(false);
