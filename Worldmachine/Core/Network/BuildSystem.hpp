@@ -106,8 +106,11 @@ namespace worldmachine {
 		std::condition_variable mainCV;
 		std::atomic_bool _isBuilding = false;
 		
+#if WM_DEBUGLEVEL
 		utl::concurrent_dispatch_queue dispatchQueue{2};
-		
+#else
+		utl::concurrent_dispatch_queue dispatchQueue;
+#endif
 		utl::hashset<utl::UUID> builtNodes;
 		utl::hashset<utl::UUID> buildingNodes;
 		
