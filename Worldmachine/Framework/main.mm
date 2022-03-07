@@ -418,13 +418,13 @@ extern worldmachine::Window* createMainWindow();
 	float const fontSize = 16;
 	float const dpiScale = 2;
 	
-	if (auto font = io.Fonts->AddFontFromFileTTF(worldmachine::pathForResource("SFPro-Regular-Roman", "ttf").c_str(), fontSize * dpiScale)) {
+	if (auto font = io.Fonts->AddFontFromFileTTF(worldmachine::pathForResource("Font/SFPro-Regular-Roman", "ttf").c_str(), fontSize * dpiScale)) {
 		_appData.defaultFont = font;
 	}
 	else {
 		throw;
 	}
-	io.Fonts->AddFontFromFileTTF(worldmachine::pathForResource("SFMono-Regular-Roman", "ttf").c_str(), fontSize * dpiScale);
+	io.Fonts->AddFontFromFileTTF(worldmachine::pathForResource("Font/SFMono-Regular-Roman", "ttf").c_str(), fontSize * dpiScale);
 	io.Fonts->Build();
 	
 	io.FontGlobalScale = 1.0 / dpiScale;

@@ -89,7 +89,7 @@ namespace worldmachine {
 		using nlohmann::json;
 		
 		
-		auto fontPath = pathForResource(this->resourceName(font, size), "json");
+		auto fontPath = pathForResource(std::filesystem::path{ "Font" } / this->resourceName(font, size), "json");
 		std::fstream file(fontPath, std::ios::in);
 		if (!file) {
 			std::runtime_error("Failed to open File");

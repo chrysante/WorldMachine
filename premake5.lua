@@ -73,8 +73,14 @@ filter "system:macosx"
 filter {}
 
 --filter "files:Worldmachine/App/Resource/**"
-filter "files:**.png"
-    buildaction "Embed"
+--filter "files:**.png"
+--    buildaction "Embed"
+--filter {}
+-- Copy Resources
+filter "system:macosx"
+    postbuildcommands {
+        "{COPY} %{prj.location}/Resource/** %{cfg.targetdir}/Worldmachine.app/Contents/Resources"
+    }
 filter {}
 
 xcodebuildresources {

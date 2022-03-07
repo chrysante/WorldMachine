@@ -33,9 +33,9 @@ namespace worldmachine {
 		return (MTL::Texture*)CFBridgingRetain(texture);
 	}
 	
-	std::string pathForResource(std::string_view name, std::string_view type) {
+	std::string pathForResource(std::filesystem::path name, std::string_view type) {
 		
-		NSString * path = [[NSBundle mainBundle] pathForResource:  toNSString(name.data()) ofType: toNSString(type.data())];
+		NSString * path = [[NSBundle mainBundle] pathForResource:  toNSString(name.string().data()) ofType: toNSString(type.data())];
 		
 		return toSTDString(path);
 	}
