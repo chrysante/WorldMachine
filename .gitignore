@@ -1,0 +1,5 @@
+Build/
+Gen/
+**.xcworkspace
+**.xcodeproj
+**.DS_Store
