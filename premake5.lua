@@ -27,7 +27,7 @@ includedirs {
 }
 
 externalincludedirs {
-    "../Utility", "vendor"
+    "Utility", "vendor"
 }
 
 filter "system:macosx" 
@@ -36,7 +36,7 @@ filter "system:macosx"
     defines { "WM_PLATFORM_MACOS" }
     externalincludedirs "vendor/Metal-cpp"
     xcodebuildsettings { 
-        ["MTL_HEADER_SEARCH_PATHS"] = "../../Worldmachine ../../../Utility"
+        ["MTL_HEADER_SEARCH_PATHS"] = "../../Worldmachine ../../Utility"
     }
 filter {}
 
