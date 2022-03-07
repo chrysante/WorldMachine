@@ -5,20 +5,20 @@ workspace "Worldmachine"
 architecture "x86_64"
 configurations {
     "Debug",
-    "Release",
-    "Dist"
+    "Development",
+    "Release"
 }
 filter "configurations:Debug" 
     symbols "On"
-filter "configurations:Release or Dist"
+filter "configurations:Development or Release"
     optimize "Speed"
 filter {}
 
 filter { "configurations:Debug" }
     defines { "WM_DEBUGLEVEL=2", "WM_LOGLEVEL=2" }
-filter { "configurations:Release" }
+filter { "configurations:Development" }
     defines { "WM_DEBUGLEVEL=1", "WM_LOGLEVEL=1" }
-filter { "configurations:Dist"  }
+filter { "configurations:Release"  }
     defines { "WM_DEBUGLEVEL=0", "WM_LOGLEVEL=0" }
 filter {}
 
