@@ -1,0 +1,100 @@
+WorldMachine File: ignore
+Nodes:
+  - ImplementationID: 16841136255964735425
+    Name: Y Offset
+    Position: [126.86377, 352.614258, 6]
+    Implementation Fields:
+      Scale: 7.5999999
+      Seed: 10
+      Levels: 3
+      Strength Falloff: 0.5
+      Scale Falloff: 1.70000005
+      UV Offset Strength: 0.5
+      Interpolation: 2
+  - ImplementationID: 10430681964881026268
+    Name: Clamp
+    Position: [707.030273, 126.079346, 2]
+    Implementation Fields:
+      Min: 0
+      Max: 0.0659999996
+  - ImplementationID: 16841136255964735425
+    Name: Detail Noise
+    Position: [486.007568, 120.330933, 3]
+    Implementation Fields:
+      Scale: 8.94999981
+      Seed: 0
+      Levels: 8
+      Strength Falloff: 0.889999986
+      Scale Falloff: 1.70000005
+      UV Offset Strength: 0.5
+      Interpolation: 2
+  - ImplementationID: 16841136255964735425
+    Name: X Offset
+    Position: [138.469849, 507.644836, 5]
+    Implementation Fields:
+      Scale: 7.4000001
+      Seed: 5
+      Levels: 3
+      Strength Falloff: 0.5
+      Scale Falloff: 1.70000005
+      UV Offset Strength: 0.5
+      Interpolation: 2
+  - ImplementationID: 17222617422785916129
+    Name: Voronoi (Main Generator)
+    Position: [617.002258, 363.630432, 4]
+    Implementation Fields:
+      Scale: 2.95000005
+      Seed: 1023129508
+      Modulation: 0.349999994
+      UV Offset Strength: 0.409999996
+      Distance Function: 3
+      P: 5.01999998
+      Square Height: false
+  - ImplementationID: 14126580744401813704
+    Name: Add
+    Position: [902.801392, 233.029144, 0]
+    Implementation Fields:
+      Mode: 1
+      Strength: 1
+  - ImplementationID: 14882868260901058113
+    Name: UVs
+    Position: [363.649475, 406.355835, 1]
+    Implementation Fields:
+      {}
+Edges:
+  - BeginNodeIndex: 3
+    EndNodeIndex: 6
+    BeginPinIndex: 0
+    EndPinIndex: 0
+    BeginPinKind: 1
+    EndPinKind: 0
+  - BeginNodeIndex: 0
+    EndNodeIndex: 6
+    BeginPinIndex: 0
+    EndPinIndex: 1
+    BeginPinKind: 1
+    EndPinKind: 0
+  - BeginNodeIndex: 6
+    EndNodeIndex: 4
+    BeginPinIndex: 0
+    EndPinIndex: 0
+    BeginPinKind: 1
+    EndPinKind: 0
+  - BeginNodeIndex: 2
+    EndNodeIndex: 1
+    BeginPinIndex: 0
+    EndPinIndex: 0
+    BeginPinKind: 1
+    EndPinKind: 0
+  - BeginNodeIndex: 1
+    EndNodeIndex: 5
+    BeginPinIndex: 0
+    EndPinIndex: 1
+    BeginPinKind: 1
+    EndPinKind: 0
+  - BeginNodeIndex: 4
+    EndNodeIndex: 5
+    BeginPinIndex: 0
+    EndPinIndex: 0
+    BeginPinKind: 1
+    EndPinKind: 0
