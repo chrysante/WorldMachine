@@ -21,14 +21,14 @@
 #include "BuildSettingsView.hpp"
 #include "PluginsView.hpp"
 #include "NetworkListView.hpp"
+#include "DebugConsole.hpp"
 
 namespace worldmachine {
 	
 	MainWindow::MainWindow():
 		Window("World Machine")
 	{
-		getLibraryDir();
-		PluginManager::instance().loadPlugin("libWMBuiltinNodes.dylib");
+		PluginManager::instance().loadPlugin(executablePath().parent_path() / "libWMBuiltinNodes.dylib");
 		
 		
 		network = utl::make_unique_ref<Network>();
@@ -49,6 +49,7 @@ namespace worldmachine {
 		addView(new BuildSettingsView(network.get(), buildSystem.get()));
 		addView(new PluginsView(network.get()));
 		addView(new NetworkListView(network.get()));
+		addView(new DebugConsole());
 	}
 	
 	MainWindow::~MainWindow() = default;

@@ -11,6 +11,9 @@ namespace worldmachine {
 	
 	MTL::Texture* loadTextureFromFile(MTL::Device* device, std::filesystem::path filename, std::string_view extension);
 	
+	std::filesystem::path currentDirectoryPath();
+	std::filesystem::path executablePath();
+	
 	std::string pathForResource(std::filesystem::path path, std::string_view extension);
 	std::filesystem::path getLibraryDir();
 	

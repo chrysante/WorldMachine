@@ -36,6 +36,18 @@ namespace worldmachine {
 		return result;
 	}
 	
+	std::filesystem::path currentDirectoryPath() {
+		return toSTDString(NSFileManager.defaultManager.currentDirectoryPath);
+	}
+	
+	std::filesystem::path executablePath() {
+		const char* result =
+			[[[NSBundle mainBundle] executablePath] fileSystemRepresentation];
+		return result;
+	}
+	
+	
+	
 	std::string pathForResource(std::filesystem::path name, std::string_view type) {
 		
 		NSString * path = [[NSBundle mainBundle] pathForResource:  toNSString(name.string().data()) ofType: toNSString(type.data())];

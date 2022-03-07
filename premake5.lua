@@ -79,7 +79,8 @@ filter {}
 -- Copy Resources
 filter "system:macosx"
     postbuildcommands {
-        "{COPY} %{prj.location}/Resource/** %{cfg.targetdir}/Worldmachine.app/Contents/Resources"
+        "{COPY} %{prj.location}/Resource/** %{cfg.targetdir}/Worldmachine.app/Contents/Resources",
+        "{COPY} %{cfg.targetdir}/libWMBuiltinNodes.dylib %{cfg.targetdir}/Worldmachine.app/Contents/MacOS",
     }
 filter {}
 
@@ -162,6 +163,10 @@ links { "WMCore", "Utility", "ImGui", "YAML" }
 files { 
     "Worldmachine/BuiltinNodes/**.hpp",
     "Worldmachine/BuiltinNodes/**.cpp"
+}
+
+postbuildcommands {
+    "{COPY} %{cfg.targetdir}/libWMBuiltinNodes.dylib %{cfg.targetdir}/Worldmachine.app/Contents/MacOS",
 }
 
 -----------------------------------------------------------------------------------------

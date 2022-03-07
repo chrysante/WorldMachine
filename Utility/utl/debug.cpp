@@ -3,11 +3,17 @@
 #include "stdio.hpp"
 #include "bit.hpp"
 #include "typeinfo.hpp"
+#include "functional.hpp"
 
 #include <thread>
 #include <iomanip>
 #include <ctime>
 
+
+//namespace utl {
+//	static utl::vector<> _global_loggers;
+//	void add_global_logger(std::ostream&)
+//}
 
 namespace utl::_private::debug {
 	
@@ -177,7 +183,6 @@ namespace utl::_private::debug {
 		return oss.str();
 	}
 	
-	
 	void _do_log(log_data data, log_level level, std::string message) {
 		static std::atomic<std::size_t> modNameLength = 0;
 		update_maximum(modNameLength, strlen(data.module_name));
@@ -200,7 +205,8 @@ namespace utl::_private::debug {
 				   logLevelMessageFormat(level),
 				   message,
 				   format_codes::reset);
-		
+		auto [stream, lock] = get_global_output_stream();
+		std::flush(*stream._stream);
 	}
 }
 
