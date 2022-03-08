@@ -6,9 +6,9 @@ namespace worldmachine {
 	
 	class DebugNetworkView: public NetworkView {
 	public:
-		DebugNetworkView(Network* network, BuildSystem* buildSystem):
+		DebugNetworkView(Network* network):
 			View("Network View"),
-			NetworkView(network, buildSystem)
+			NetworkView(network)
 		{}
 		
 	private:

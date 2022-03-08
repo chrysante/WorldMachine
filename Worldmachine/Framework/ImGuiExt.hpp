@@ -16,4 +16,9 @@ namespace ImGui {
 		Text("%s", utl::format(formatString, UTL_FORWARD(args)...).data());
 	}
 	
+	template <typename... Args>
+	void TextfColored(mtl::float4 color, std::string_view formatString, Args&&... args) {
+		TextColored(color, "%s", utl::format(formatString, UTL_FORWARD(args)...).data());
+	}
+	
 }

@@ -4,14 +4,14 @@
 #include <string>
 #include <utl/static_string.hpp>
 #include <utl/hash.hpp>
+#include <atomic>
 
 #include "Core/Base.hpp"
+#include "Core/BuildSystemFwd.hpp"
 #include "Core/Image/Image.hpp"
 
 #include "Pin.hpp"
-#include "Network.hpp"
 #include "NodeSerializer.hpp"
-#include "BuildSystemFwd.hpp"
 #include "ImplementationID.hpp"
 
 namespace worldmachine {
@@ -32,9 +32,9 @@ namespace worldmachine {
 		friend class ImageNodeImplementation;
 		friend class NodeDependencyMap;
 		friend class PluginManager;
-		
-		
+		friend class Network;
 		friend class Registry;
+		
 	public:
 		NodeImplementation(NodeType type): _type(type) {}
 		virtual ~NodeImplementation() = default;
@@ -52,8 +52,13 @@ namespace worldmachine {
 		
 		NodeType type() const { return _type; }
 		
-	protected:
+		bool isBuilding() const { return _isBuilding; }
 		BuildType currentBuildType() const { return _currentBuildType; }
+		
+		bool built() const { return _built; }
+		bool previewBuilt() const { return _previewBuilt; }
+		
+	protected:
 		mtl::usize2 buildResolution(BuildType type) const;
 		mtl::usize2 currentBuildResolution() const { return buildResolution(currentBuildType()); }
 		
@@ -65,10 +70,13 @@ namespace worldmachine {
 	private:
 		utl::UUID _nodeID;
 		NodeSerializer _serializer;
-		BuildType _currentBuildType = BuildType::none;
 		mtl::usize2 _previewBuildResolution = 0;
 		mtl::usize2 _highresBuildResolution = 0;
 		NodeType _type;
+		std::atomic<BuildType> _currentBuildType = BuildType::none;
+		std::atomic_bool _isBuilding = false;
+		std::atomic_bool _built = false;
+		std::atomic_bool _previewBuilt = false;
 	};
 
 	/// MARK: - ImageNodeImplementation

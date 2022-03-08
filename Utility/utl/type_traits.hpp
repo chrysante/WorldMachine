@@ -502,3 +502,66 @@ namespace utl {
 	struct is_trivially_relocatable: std::conjunction<std::is_trivially_move_constructible<T>, std::is_trivially_destructible<T>> {};
 	
 }
+
+
+namespace utl {
+	
+	template <typename>
+	struct __strip_signature;
+
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...)>                           { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const>                     { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) volatile>                  { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const volatile>            { using type = R(Args...); };
+
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) &>                         { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const &>                   { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) volatile &>                { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const volatile &>          { using type = R(Args...); };
+
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) noexcept>                  { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const noexcept>            { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) volatile noexcept>         { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const volatile noexcept>   { using type = R(Args...); };
+
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) & noexcept>                { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const & noexcept>          { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) volatile & noexcept>       { using type = R(Args...); };
+	template <typename R, typename C, typename ...Args>
+	struct __strip_signature<R (C::*) (Args...) const volatile & noexcept> { using type = R(Args...); };
+	
+	template <typename>
+	struct __func_traits_impl;
+	
+	template <typename F, typename Sig = typename __strip_signature<decltype(&F::operator())>::type>
+	struct function_traits: __func_traits_impl<Sig> {
+		using __base = __func_traits_impl<Sig>;
+		using typename __base::result_type;
+		using __base::argument_count;
+		using __base::argument;
+	};
+	
+	template <typename R, typename ... Args>
+	struct __func_traits_impl<R(Args...)> {
+		using result_type = R;
+		static constexpr std::size_t argument_count = sizeof...(Args);
+		template <std::size_t N> requires (N < argument_count)
+		using argument = std::tuple_element_t<N, std::tuple<Args...>>;
+	};
+	
+}

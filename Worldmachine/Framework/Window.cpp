@@ -116,7 +116,12 @@ namespace worldmachine {
 		}
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5);
-		utl_defer { ImGui::PopStyleVar(1); };
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 5);
+		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 5);
+		ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 5);
+		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5);
+		
+		utl_defer { ImGui::PopStyleVar(5); };
 		
 		DockSpaceUI(false);
 

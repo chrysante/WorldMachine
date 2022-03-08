@@ -6,9 +6,6 @@
 
 #include "Framework/ImGuiExt.hpp"
 
-#include "Core/Network/NetworkSerialize.hpp"
-#include "Core/Network/Network.hpp"
-
 namespace worldmachine {
 	
 	Registry& Registry::instance() {
@@ -95,12 +92,14 @@ namespace worldmachine {
 
 namespace worldmachine {
 	
-	struct ImGuiRuntimeDataImpl {
-		ImGuiContext* context;
-		ImGuiMemAllocFunc allocFn;
-		ImGuiMemFreeFunc freeFn;
-		void* userdata;
-	};
+	namespace {
+		struct ImGuiRuntimeDataImpl {
+			ImGuiContext* context;
+			ImGuiMemAllocFunc allocFn;
+			ImGuiMemFreeFunc freeFn;
+			void* userdata;
+		};
+	}
 	
 	void setImGuiRuntimeData(worldmachine_ImGuiRuntimeData blob) {
 		ImGuiRuntimeDataImpl data;

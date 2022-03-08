@@ -10,7 +10,9 @@
 #include <type_traits>
 #include <string>
 
+#include "Network/Node.hpp"
 #include "Network/NodeImplementation.hpp"
+
 
 #define WM_RegisterNode(Name)                                                       \
 __attribute__((constructor)) void WM_register_##Name() {                            \

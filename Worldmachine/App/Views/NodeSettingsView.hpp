@@ -4,20 +4,14 @@
 
 namespace worldmachine {
 	
-	class BuildSystem;
-	
 	class NodeSettingsView: public NodeView {
 	public:
-		NodeSettingsView(Network* network, BuildSystem* buildSystem):
+		NodeSettingsView(Network* network):
 			View("Node Settings"),
-			NodeView(network),
-			buildSystem(buildSystem)
+			NodeView(network)
 		{}
 
 		void display() override;
-		
-	private:
-		BuildSystem* buildSystem;
 	};
 	
 }

@@ -8,15 +8,11 @@ namespace worldmachine {
 	
 	class PluginsView: public View {
 	public:
-		PluginsView(Network* network):
-			View("Plugins"),
-			network(network)
+		PluginsView():
+			View("Plugins")
 		{}
 
 		void display() override;
-		
-	private:
-		Network* network;
 	};
 	
 }

@@ -39,32 +39,6 @@ namespace worldmachine {
 				});
 			}
 		}
-		
-		
-		
-//		if (BeginTable("Nodes", 5, flags)) {
-//			TableSetupColumn("Name");
-//			TableSetupColumn("VTable Pointer");
-//			TableHeadersRow();
-//			for (auto& [implementationID, vtable]: vtables) {
-//				ImGui::TableNextRow();
-//				auto desc = vtable.descriptor();
-//				auto impl = vtable.createImplementation();
-//				void* implVTablePtr;
-//				std::memcpy(&implVTablePtr, (void*)impl.get(), sizeof(void*));
-//				ImGui::TableSetColumnIndex(0);
-//				ImGui::Textf("{}", desc.name);
-//				ImGui::TableSetColumnIndex(1);
-//				ImGui::Textf("{}", implementationID);
-//				ImGui::TableSetColumnIndex(2);
-//				ImGui::Textf("{}", vtable.pluginID());
-//				ImGui::TableSetColumnIndex(3);
-//				ImGui::Textf("{}", vtable.buildTime());
-//				ImGui::TableSetColumnIndex(4);
-//				ImGui::Textf("{}", implVTablePtr);
-//			}
-//			ImGui::EndTable();
-//		}
 	}
 	
 }

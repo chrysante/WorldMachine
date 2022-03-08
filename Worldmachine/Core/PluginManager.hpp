@@ -6,10 +6,9 @@
 #include <utl/dynamic_library.hpp>
 #include <utl/UUID.hpp>
 #include <span>
+#include "PluginManagerFwd.hpp"
 
 namespace worldmachine {
-	
-	class Network;
 	
 	struct Plugin {
 		Plugin(utl::dynamic_library);
@@ -35,7 +34,7 @@ namespace worldmachine {
 		
 		std::span<Plugin> getLoadedPlugins() { return loadedPlugins; }
 		void loadPlugin(std::filesystem::path);
-		void refreshPlugin(Plugin&, Network*);
+		void refreshPlugin(Plugin&);
 		
 		Plugin* getPlugin(utl::UUID id);
 		

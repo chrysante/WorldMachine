@@ -1,4 +1,5 @@
 #include "BuildSystem.hpp"
+#include "BuildJob.hpp"
 
 #include <span>
 #include <utl/hashset.hpp>
@@ -86,6 +87,14 @@ namespace worldmachine {
 		
 	}
 	
+	BuildSystem::BuildSystem() {
+		
+	}
+	
+	utl::unique_ref<BuildSystem> BuildSystem::create() {
+		return utl::unique_ref<BuildSystem>(new BuildSystem());
+	}
+	
 	BuildSystem::~BuildSystem() {
 		if (isBuilding()) {
 			cancelCurrentBuild();
@@ -93,6 +102,18 @@ namespace worldmachine {
 		if (coordThread.joinable()) {
 			coordThread.join();
 		}
+	}
+	
+	utl::vector<utl::listener> BuildSystem::makeListeners() {
+		utl::vector<utl::listener> result;
+		result.push_back(utl::make_listener([this](BuildRequest r) {
+			this->build(r.buildType, r.network, std::move(r.nodes));
+		}));
+		result.push_back(utl::make_listener([this](BuildCancelRequest){
+			cancelCurrentBuild();
+		}));
+		
+		return result;
 	}
 	
 	utl::small_vector<utl::UUID, 8> BuildSystem::gatherUnbuiltRoots(Network const* network,
@@ -191,6 +212,12 @@ namespace worldmachine {
 		network->locked([&]{
 			auto const nodeIndex = network->indexFromID(nodeID);
 			network->nodes().get<Node::BuildProgress>(nodeIndex) = 0;
+			auto* const impl = network->nodes().get<Node::Implementation>(nodeIndex).get();
+			impl->_isBuilding = false;
+			if (currentBuildType() == BuildType::preview)
+				impl->_previewBuilt = success;
+			if (currentBuildType() == BuildType::highResolution)
+				impl->_built = success;
 			if (success) {
 				if (currentBuildType() == BuildType::highResolution) {
 					network->nodes().get<Node::Flags>(nodeIndex) |= NodeFlags::built;
@@ -263,7 +290,7 @@ namespace worldmachine {
 		if (totalTargetBuildCount == nodeBuildsCompleted) {
 			// we are done!
 			WM_Assert(buildingNodes.empty());
-			cleanup();
+			cleanup(network);
 			signal = Signal::finished;
 			return;
 		}
@@ -324,7 +351,8 @@ namespace worldmachine {
 					network->locked([&]{
 						network->nodes().get<Node::BuildProgress>(nodeIndex) += oneProgress;
 					});
-					_progress += oneProgress * UINT_MAX / totalTargetBuildCount;
+					_info._progress += oneProgress * UINT_MAX / totalTargetBuildCount;
+					network->_buildInfo._progress += oneProgress * UINT_MAX / totalTargetBuildCount;
 					invalidateView();
 				};
 				g.add(std::move(jobWrapper));
@@ -343,7 +371,7 @@ namespace worldmachine {
 					nodeCleanupHandler();
 				nodeBuildFinished(network, nodeID, false);
 			});
-			
+			network->nodes().get<Node::Implementation>(nodeIndex)->_isBuilding = true;
 			dispatchQueue.async(std::move(g));
 		}
 		signal = Signal::sleep;
@@ -360,38 +388,32 @@ namespace worldmachine {
 			}
 		});
 		LOG_COORD(debug, "cleanup");
-		cleanup();
+		cleanup(network);
 		LOG_COORD(debug, "done");
 		mainCV.notify_one();
 	}
 	
-	
-	void BuildSystem::build(Network* network) {
-		build(network, network->IDsFromIndices(network->gatherLeaveNodes()));
-	}
-	
-	void BuildSystem::build(Network* network, utl::vector<utl::UUID> nodes) {
-		buildImpl(network, std::move(nodes), BuildType::highResolution);
-	}
-	
-	void BuildSystem::buildPreview(Network* network) {
-		buildPreview(network, network->IDsFromIndices(network->gatherLeaveNodes()));
-	}
-	
-	void BuildSystem::buildPreview(Network* network, utl::vector<utl::UUID> nodes) {
-		buildImpl(network, std::move(nodes), BuildType::preview);
-	}
-	
-	void BuildSystem::buildImpl(Network* network,
-								utl::vector<utl::UUID> nodes,
-								BuildType type)
+	void BuildSystem::build(BuildType type,
+							Network* network,
+							utl::vector<utl::UUID> nodes)
 	{
-		WM_Assert(!isBuilding(), "Check before starting a build action");
+		WM_Expect(type != BuildType::none);
+		if (isBuilding()) {
+			WM_Log(error, "We are already building, ignoring this request");
+			return;
+		}
+		
 		WM_Assert(builtNodes.empty());
 		WM_Assert(buildingNodes.empty());
-		_isBuilding = true;
+		
+		if (nodes.empty()) {
+			nodes = network->IDsFromIndices(network->gatherLeaveNodes());
+		}
+		
+		_info._type = type;
+		_info._progress = 0;
+		network->_buildInfo = _info;
 		signal = Signal::start;
-		_buildType = type;
 		builtNodes.clear();
 		if (coordThread.joinable()) {
 			coordThread.join();
@@ -400,7 +422,7 @@ namespace worldmachine {
 		nodes = performSanityChecks(network, std::move(nodes));
 		if (nodes.empty()) {
 			WM_Log(warning, "'nodes' was empty. Not building anything");
-			cleanup();
+			cleanup(network);
 			return;
 		}
 		
@@ -409,15 +431,15 @@ namespace worldmachine {
 					   [this, network](std::size_t nodeIndex){
 			auto flags = network->nodes().get<Node::Flags>(nodeIndex);
 			WM_Assert(!(flags & NodeFlags::building), "This node should not be building right now");
-			auto const isBuiltFlag = _buildType == BuildType::highResolution ? NodeFlags::built : NodeFlags::previewBuilt;
+			auto const isBuiltFlag = _info.type() == BuildType::highResolution ? NodeFlags::built : NodeFlags::previewBuilt;
 			if (test(flags & isBuiltFlag)) {
 				builtNodes.insert(network->IDFromIndex(nodeIndex));
 				++nodeBuildsCompleted;
-				_progress += UINT_MAX / totalTargetBuildCount;
+				_info._progress += UINT_MAX / totalTargetBuildCount;
 			}
 			auto* const impl = network->nodes().get<Node::Implementation>(nodeIndex).get();
-			impl->_currentBuildType = this->currentBuildType();
 			
+			impl->_currentBuildType = this->currentBuildType();
 			impl->_previewBuildResolution = this->previewResolution;
 			impl->_highresBuildResolution = this->resolution;
 		});
@@ -444,13 +466,13 @@ namespace worldmachine {
 	}
 	
 	
-	void BuildSystem::cleanup() {
+	void BuildSystem::cleanup(Network* network) {
 		builtNodes.clear();
 		buildingNodes.clear();
-		_isBuilding = false;
+		_info = {};
+		network->_buildInfo = {};
 		totalTargetBuildCount = 0;
 		nodeBuildsCompleted = 0;
-		_progress = 0;
 		if (signal == Signal::finished || signal == Signal::start) {
 			WM_Log(info, "Build finished in {}s",
 				   double(stopwatch.elapsed_time()) / 1'000'000'000);

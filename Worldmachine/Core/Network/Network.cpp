@@ -3,11 +3,13 @@
 #include <optional>
 #include <span>
 #include <algorithm>
+#include <yaml-cpp/yaml.h>
 
 #include "Framework/Typography/TextRenderer.hpp"
 
 #include "Core/Debug.hpp"
 #include "Core/Registry.hpp"
+#include "Core/GlobalMessenger.hpp"
 
 #include "NodeImplementation.hpp"
 
@@ -170,6 +172,42 @@ namespace worldmachine {
 		return result;
 	}
 	
+	/// MARK: - Network
+	Network::Network() {
+		auto id = globalMessenger().register_listener([this](PluginsWillReload){
+			nodes().for_each<Node::Implementation>([&](Node::Implementation& impl) {
+				YAML::Emitter out;
+				out << YAML::BeginMap;
+				impl->serializer().serialize(out);
+				out << YAML::EndMap;
+				
+				_storedImplementationState.push_back({
+					impl->implementationID(),
+					out.c_str()
+				});
+				impl.reset();
+			});
+		});
+		_listenerIDs.insert(std::move(id));
+		
+		id = globalMessenger().register_listener([this](PluginsDidReload){
+			std::size_t index = 0;
+			nodes().for_each<Node::Implementation, Node::ID>([&](Node::Implementation& impl,
+																 auto nodeID) {
+				auto [implementationID, text] = _storedImplementationState[index++];
+				impl = Registry::instance().createNodeImplementation(implementationID, nodeID);
+				
+				YAML::Node yamlNode = YAML::Load(text);
+				impl->serializer().deserialize(yamlNode);
+			});
+			invalidateAllNodes();
+		});
+		_listenerIDs.insert(std::move(id));
+	}
+
+	utl::unique_ref<Network> Network::create() {
+		return utl::unique_ref<Network>(new Network());
+	}
 	
 	/// MARK: - Modification and interaction
 	NetworkHitResult Network::hitTest(mtl::float2 hitPosition) const {
@@ -473,7 +511,7 @@ namespace worldmachine {
 		this->Selection::clear();
 	}
 	
-	void Network::setRectangleSelection(mtl::rectangle<float> rect, Operation op) {
+	void Network::setRectangleSelection(mtl::rectangle<float> rect, SelectOperation op) {
 		this->Selection::clearCandidates();
 		
 		this->nodes().for_each<Node::Position, Node::Size>([&](auto index, auto position, auto size) {
@@ -489,19 +527,19 @@ namespace worldmachine {
 		
 		for (auto i: this->Selection::candidates) {
 			switch (op) {
-				case Operation::setUnion: {
+				case SelectOperation::setUnion: {
 					this->setNodeFlag(i, NodeFlags::selected);
 					break;
 				}
-				case Operation::setDifference: {
+				case SelectOperation::setDifference: {
 					this->clearNodeFlag(i, NodeFlags::selected);
 					break;
 				}
-				case Operation::setIntersection: {
+				case SelectOperation::setIntersection: {
 					this->clearNodeFlag(i, NodeFlags::selected);
 					break;
 				}
-				case Operation::setSymmetricDifference: {
+				case SelectOperation::setSymmetricDifference: {
 					this->toggleNodeFlag(i, NodeFlags::selected);
 					break;
 				}
@@ -510,21 +548,21 @@ namespace worldmachine {
 		}
 	}
 	
-	void Network::applyRectangleSelection(Operation op) {
+	void Network::applyRectangleSelection(SelectOperation op) {
 		switch (op) {
-			case Operation::setUnion:
+			case SelectOperation::setUnion:
 				this->Selection::indices = utl::set_union(this->Selection::indices, this->Selection::candidates);
 				break;
 				
-			case Operation::setDifference:
+			case SelectOperation::setDifference:
 				this->Selection::indices = utl::set_difference(this->Selection::indices, this->Selection::candidates);
 				break;
 				
-			case Operation::setIntersection:
+			case SelectOperation::setIntersection:
 				this->Selection::indices = utl::set_intersection(this->Selection::indices, this->Selection::candidates);
 				break;
 				
-			case Operation::setSymmetricDifference:
+			case SelectOperation::setSymmetricDifference:
 				this->Selection::indices = utl::set_symmetric_difference(this->Selection::indices, this->Selection::candidates);
 				break;
 		}
@@ -597,10 +635,14 @@ namespace worldmachine {
 		
 		traverseDownstreamNodes(nodeIndex, [&, this](std::size_t downstreamNodeIndex) {
 			WM_Log(debug, "Invalidating '{}'", nodes().get<Node::Name>(downstreamNodeIndex));
-			if (test(type & BuildType::highResolution))
-				nodes().update<Node::Flags>(downstreamNodeIndex) &= ~NodeFlags::built;
-			if (test(type & BuildType::preview))
-				nodes().update<Node::Flags>(downstreamNodeIndex) &= ~NodeFlags::previewBuilt;
+			if (test(type & BuildType::highResolution)) {
+				nodes().get<Node::Flags>(downstreamNodeIndex) &= ~NodeFlags::built;
+				nodes().get<Node::Implementation>(downstreamNodeIndex)->_built = false;
+			}
+			if (test(type & BuildType::preview)) {
+				nodes().get<Node::Flags>(downstreamNodeIndex) &= ~NodeFlags::previewBuilt;
+				nodes().get<Node::Implementation>(downstreamNodeIndex)->_previewBuilt = false;
+			}
 		});
 	}
 	

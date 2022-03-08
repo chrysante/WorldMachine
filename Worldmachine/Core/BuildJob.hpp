@@ -1,28 +1,9 @@
 #pragma once
 
-#include <exception>
 #include <utl/vector.hpp>
 #include <utl/functional.hpp>
-#include <utl/concepts.hpp>
-#include <utl/operator_definition_macros.hpp>
 
 namespace worldmachine {
-	
-	class BuildSytem;
-	
-	enum struct BuildType {
-		none = 0,
-		highResolution = 1 << 0,
-		preview = 1 << 1,
-		all = (1 << 0) | (1 << 1)
-	};
-	UTL_ENUM_BITWISE_OPERATORS_DEF(BuildType);
-	
-	
-	class BuildError: public std::runtime_error {
-	public:
-		BuildError(std::string message): std::runtime_error(message) {}
-	};
 	
 	class BuildJob {
 		friend class BuildSystem;

@@ -27,6 +27,7 @@ namespace utl {
 		constexpr static std::size_t max_size() noexcept { return Cap - 1; }
 		
 		constexpr char const* c_str() const noexcept { return _data; }
+		constexpr char const* data() const noexcept { return _data; }
 		
 		constexpr char* begin() { return _data; }
 		constexpr char const* begin() const { return _data; }

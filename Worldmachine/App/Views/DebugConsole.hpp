@@ -8,14 +8,6 @@
 
 namespace worldmachine {
 	
-	class ConsoleBuffer {
-	public:
-		ConsoleBuffer();
-		
-		static ConsoleBuffer* instance;
-		std::stringstream sstr;
-	};
-
 	class DebugConsole: public View {
 	public:
 		DebugConsole();
@@ -23,7 +15,18 @@ namespace worldmachine {
 		void display() override;
 		
 	private:
-		utl::vector<std::string> lines;
+		void columnItem(int index,
+						mtl::float4 const& color,
+						std::string_view text,
+						bool wrapText = false);
+		
+		void columnItem(int index,
+						mtl::float4 const& color,
+						std::string_view format,
+						auto&&... args);
+		
+	private:
+		std::size_t currentLines = 0;
 	};
 	
 }

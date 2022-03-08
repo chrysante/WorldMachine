@@ -27,6 +27,21 @@ namespace worldmachine {
 	}
 	
 	bool View::_beginDisplay() {
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, _padding);
+		utl::scope_guard guardPadding = []{
+			ImGui::PopStyleVar();
+		};
+		
+		if (_backgroundColor) {
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, *_backgroundColor);
+		}
+		utl::scope_guard guardBackgroundColor = [this]{
+			if (_backgroundColor) {
+				ImGui::PopStyleColor();
+			}
+		};
+		
+		
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("View")) {
 			if (ImGui::MenuItem(utl::format("Show {}", name()).data(),
@@ -77,13 +92,15 @@ namespace worldmachine {
 	/// MARK: - InputSurfaceView
 	static bool detectViewportInput();
 	
+	InputSurfaceView::InputSurfaceView(): View(std::string{}) {
+		setPadding(0);
+#if WM_DEBUGLEVEL
+//		setBackgroundColor({ 1, 0, 1, 1 });
+#endif
+	}
+	
 	void InputSurfaceView::_doDisplay() {
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, float2{});
-		utl::armed_scope_guard guard = []{
-			ImGui::PopStyleVar();
-		};
 		if (View::_beginDisplay()) {
-			guard.execute();
 			_hasMouseInputCapture = detectViewportInput();
 			_endDisplay();
 		}

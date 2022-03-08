@@ -25,7 +25,7 @@ namespace worldmachine {
 		friend class DebugNetworkView;
 		
 	public:
-		NetworkView(Network*, BuildSystem*);
+		NetworkView(Network*);
 		~NetworkView();
 		
 		void onFileOpen();
@@ -105,7 +105,6 @@ namespace worldmachine {
 		
 	private:
 		Network* network;
-		BuildSystem* buildSystem;
 		utl::unique_ref<NetworkRenderer> renderer;
 		NetworkUniforms uniforms{};
 		mtl::double4x4 projectionMatrix, viewMatrix, inverseViewMatrix;

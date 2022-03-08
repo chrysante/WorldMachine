@@ -14,9 +14,9 @@ using namespace mtl;
 
 namespace worldmachine {
 	
-	HeightmapView3D::HeightmapView3D(Network* network, BuildSystem* buildSystem):
+	HeightmapView3D::HeightmapView3D(Network* network):
 		View("Heightmap View 3D"),
-		ImageDisplayView(network, buildSystem)
+		ImageDisplayView(network)
 	{}
 	
 	void HeightmapView3D::init() {
@@ -36,13 +36,13 @@ namespace worldmachine {
 		}
 	}
 	
-	bool HeightmapView3D::displayImage() {
+	void HeightmapView3D::displayImage() {
 #if 0
 		debugView();
 #endif
 		
 		if (!imageIsHeightmap) {
-			return false;
+			return;
 		}
 		
 		float4x4 rotation = {
@@ -83,7 +83,6 @@ namespace worldmachine {
 					   uniforms);
 		
 		displayTexture(renderer->renderedImage());
-		return true;
 	}
 	
 	void HeightmapView3D::rightMouseDragged(MouseDragEvent event) {

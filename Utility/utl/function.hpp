@@ -50,48 +50,6 @@ namespace utl::_private::functionDetails {
 
 namespace utl {
 	
-	
-	
-	
-	template <typename>
-	struct __strip_signature;
-
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...)>                           { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const>                     { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) volatile>                  { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const volatile>            { using type = R(Args...); };
-
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) &>                         { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const &>                   { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) volatile &>                { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const volatile &>          { using type = R(Args...); };
-
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) noexcept>                  { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const noexcept>            { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) volatile noexcept>         { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const volatile noexcept>   { using type = R(Args...); };
-
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) & noexcept>                { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const & noexcept>          { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) volatile & noexcept>       { using type = R(Args...); };
-	template <typename R, typename C, typename ...Args>
-	struct __strip_signature<R (C::*) (Args...) const volatile & noexcept> { using type = R(Args...); };
-	
 	template <typename F, typename Sig = typename __strip_signature<decltype(&F::operator())>::type>
 	function(F) -> function<Sig>;
 	

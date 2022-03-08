@@ -11,9 +11,9 @@ using namespace mtl;
 
 namespace worldmachine {
 	
-	ImageView2D::ImageView2D(Network* network, BuildSystem* buildSystem):
+	ImageView2D::ImageView2D(Network* network):
 		View("Image View 2D"),
-		ImageDisplayView(network, buildSystem)
+		ImageDisplayView(network)
 	{}
 	
 	void ImageView2D::init() {
@@ -25,17 +25,17 @@ namespace worldmachine {
 		renderer->draw(img);
 	}
 	
-	bool ImageView2D::displayImage() {
-		if (!renderer->renderedImage()) {
-			return false;
-		}
+	void ImageView2D::displayImage() {
 		usize2 const size = renderer->renderedImageSize();
 		auto const ratio = (double2)size / size.fold(utl::max);
 		auto const displaySize = ratio * (this->size() / ratio).fold(utl::min);
 		
 		ImGui::SetCursorPos((this->size() - displaySize) / 2);
 		worldmachine::displayImage(renderer->renderedImage(), displaySize);
-		return true;
+	}
+	
+	bool ImageView2D::hasCachedImage() const {
+		return renderer->renderedImage() != nullptr;
 	}
 	
 }

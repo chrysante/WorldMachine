@@ -4,7 +4,8 @@
 
 #include "Core/Network/Network.hpp"
 #include "Core/Network/NodeImplementation.hpp"
-#include "Core/Network/BuildSystem.hpp"
+#include "Core/BuildSystemFwd.hpp"
+#include "Framework/Window.hpp"
 
 namespace worldmachine {
 
@@ -18,7 +19,7 @@ namespace worldmachine {
 		if (!activeNode) {
 			return displayInactive("No Node Selected");
 		}
-		else if (buildSystem->isBuilding() && buildSystem->currentBuildType() == BuildType::highResolution) {
+		else if (network()->isBuilding() && network()->buildInfo().type() == BuildType::highResolution) {
 			return displayInactive("Building...");
 		}
 		
@@ -35,13 +36,15 @@ namespace worldmachine {
 			network()->setNodeName(nodeIndex, buffer);
 		}
 		ImGui::Separator();
-		if (buildSystem->locked([&]{ return activeNode->displayControls(); })) {
-			if (buildSystem->isBuilding()) {
-				buildSystem->cancelCurrentBuild();
+		if (activeNode->displayControls()) {
+			if (network()->isBuilding()) {
+				getWindow()->sendMessage(BuildCancelRequest{});
 			}
 			network()->invalidateNodesDownstream(activeNode->nodeID());
 			
-			buildSystem->buildPreview(network(), { activeDisplayNode->nodeID() });
+			getWindow()->sendMessage(BuildRequest{
+				BuildType::preview, network(), { activeDisplayNode->nodeID() }
+			});
 		}
 	}
 

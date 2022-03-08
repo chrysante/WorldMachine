@@ -8,7 +8,7 @@
 #include "Framework/Window.hpp"
 
 #include "Core/Network/Network.hpp"
-#include "Core/Network/BuildSystem.hpp"
+#include "Core/BuildSystemFwd.hpp"
 
 #include "App/Config.hpp"
 #include "NetworkRenderer.hpp"
@@ -45,11 +45,10 @@ namespace {
 namespace worldmachine {
 	
 	/// MARK: - Initialization
-	NetworkView::NetworkView(Network* network, BuildSystem* buildSystem):
+	NetworkView::NetworkView(Network* network):
 		View("Network"),
 		NodeView(network),
-		network(network),
-		buildSystem(buildSystem)
+		network(network)
 	{}
 
 	NetworkView::~NetworkView() = default;
@@ -253,15 +252,15 @@ namespace worldmachine {
 	}
 	
 	/// MARK: - Input
-	static Operation chooseRectangleSelectOperation(EventModifierFlags flags) {
+	static SelectOperation chooseRectangleSelectOperation(EventModifierFlags flags) {
 		if (!!(flags & EventModifierFlags::super)) {
-			return Operation::setSymmetricDifference;
+			return SelectOperation::setSymmetricDifference;
 		}
 		else if (!!(flags & EventModifierFlags::shift)) {
-			return Operation::setUnion;
+			return SelectOperation::setUnion;
 		}
 		else
-			return Operation::setUnion; // doesnt matter, because selection gets cleared before
+			return SelectOperation::setUnion; // doesnt matter, because selection gets cleared before
 	}
 	
 	void NetworkView::handleBackgroundClick(MouseDownEvent event) {
@@ -369,7 +368,7 @@ namespace worldmachine {
 			draggingEdge = std::nullopt;
 
 			if (endHitResult.type == NetworkHitResult::Type::pin) {
-				if (buildSystem->isBuilding()) {
+				if (network->isBuilding()) {
 					WM_Log(error, "Can't add edge while building");
 				}
 				else {
@@ -574,7 +573,7 @@ namespace worldmachine {
 	
 	
 	void NetworkView::removeEdge(std::size_t index) const {
-		if (buildSystem->isBuilding()) {
+		if (network->isBuilding()) {
 			WM_Log(error, "Can't remove Edge while building");
 			return;
 		}

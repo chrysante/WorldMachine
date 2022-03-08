@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ImageView.hpp"
+#include "ImageDisplayView.hpp"
 
 #include <utl/memory.hpp>
 #include <mtl/mtl.hpp>
@@ -11,13 +11,14 @@ namespace worldmachine {
 	
 	class HeightmapView3D: public ImageDisplayView {
 	public:
-		HeightmapView3D(Network*, BuildSystem*);
+		HeightmapView3D(Network*);
 
 		void init() override;
 		
 	private:
 		void updateImage(Image const&) override;
-		bool displayImage() override;
+		void displayImage() override;
+//		bool hasCachedImage() const override;
 		
 		/// Input
 		void rightMouseDragged(MouseDragEvent) override;

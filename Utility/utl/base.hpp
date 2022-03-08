@@ -114,6 +114,8 @@
 #include <popcntintrin.h>
 namespace utl {
 	
+	struct __private_tag{};
+	
 	constexpr bool is_constant_evaluated() noexcept {
 #ifdef __cpp_lib_is_constant_evaluated
 		return std::is_constant_evaluated();

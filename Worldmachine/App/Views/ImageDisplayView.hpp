@@ -6,7 +6,6 @@ namespace worldmachine {
 	
 	
 	class ImageNodeImplementation;
-	class BuildSystem;
 	class Image;
 	
 	class ImageDisplayView:
@@ -14,19 +13,19 @@ namespace worldmachine {
 		public NodeView
 	{
 	public:
-		ImageDisplayView(Network*, BuildSystem*);
+		ImageDisplayView(Network*);
 		
 		void init() override;
 		void display() override;
 		
 	private:
 		virtual void updateImage(Image const&) = 0;
-		virtual bool displayImage() = 0;
+		virtual void displayImage() = 0;
+		virtual bool hasCachedImage() const { return false; }
 		
 		void maybeUpdateImage(Image const&);
 		
 	private:
-		BuildSystem* buildSystem;
 		std::size_t imageHash = 0;
 		utl::UUID currentRenderedNodeID;
 	};

@@ -4,6 +4,7 @@
 UTL(SYSTEM_HEADER)
 
 #include <type_traits>
+#include "type_traits.hpp"
 #include <utility>
 #include <functional>
 
@@ -65,6 +66,9 @@ namespace utl {
 	
 	template <class R, class F, class... Args>
 	concept regular_invocable_r = invocable_r<R, F, Args...>;
+	
+	template <class F>
+	concept any_invocable = is_any_invocable<F>::value;
 	
 	template <typename I>
 	concept input_iterator = requires(I&& i) {

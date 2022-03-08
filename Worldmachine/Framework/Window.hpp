@@ -6,6 +6,7 @@
 #include <mtl/mtl.hpp>
 #include <utl/concepts.hpp>
 #include <utl/functional.hpp>
+#include <utl/messenger.hpp>
 
 #include "Event.hpp"
 #include "View.hpp"
@@ -35,6 +36,23 @@ namespace worldmachine {
 		void invalidate(std::size_t dirty = 1) { _invalidate(dirty); }
 		
 		std::string_view title() const { return _title; }
+		mtl::double2 size() const { return _size; }
+		
+		void sendMessage(utl::__message const& msg) {
+			_messenger.send_message(msg);
+		}
+		
+		[[nodiscard]] utl::listener_id registerListener(utl::listener_function auto&& l) {
+			return _messenger.register_listener(UTL_FORWARD(l));
+		}
+		
+		void removeListener(utl::listener_id& id) {
+			_messenger.remove_listener(id);
+		}
+		
+		void storeListenerID(utl::listener_id id) {
+			_listenerIDs.insert(std::move(id));
+		}
 		
 		View* findViewByName(std::string_view);
 		View const* findViewByName(std::string_view) const;
@@ -64,6 +82,7 @@ namespace worldmachine {
 	protected:
 		/// For use by Base Classes
 		void addView(View*);
+		utl::messenger& getMessenger() { return _messenger; }
 		
 	private:
 		/// Actually private
@@ -81,6 +100,8 @@ namespace worldmachine {
 		mtl::double2 _size = 0;
 		Appearance _appearance = {};
 		utl::function<void(std::size_t)> _invalidate;
+		utl::messenger _messenger;
+		utl::listener_id_bag _listenerIDs;
 	};
 	
 	inline std::string internal::_getWindowTitle(Window const& w) {

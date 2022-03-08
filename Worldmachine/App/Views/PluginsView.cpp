@@ -24,7 +24,7 @@ namespace worldmachine {
 			Text("%s", plugin.name().data());
 			SameLine();
 			if (Button("Reload")) {
-				PluginManager::instance().refreshPlugin(plugin, network);
+				PluginManager::instance().refreshPlugin(plugin);
 			}
 		}
 		

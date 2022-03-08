@@ -1,10 +1,9 @@
 #include "PluginManager.hpp"
 
 #include <imgui/imgui.h>
-#include <yaml-cpp/yaml.h>
 
 #include "Registry.hpp"
-#include "Core/Network/Network.hpp"
+#include "GlobalMessenger.hpp"
 
 namespace worldmachine {
 	
@@ -61,43 +60,18 @@ namespace worldmachine {
 		}
 	}
 	
-	void PluginManager::refreshPlugin(Plugin& plugin, Network* network) {
+	void PluginManager::refreshPlugin(Plugin& plugin) {
 		[[maybe_unused]]
 		auto itr = std::find(loadedPlugins.begin(),
 							 loadedPlugins.end(),
 							 plugin);
 		WM_Assert(itr != loadedPlugins.end());
 		
-		// save the network
-		utl::vector<std::string> nodeTexts;
-		utl::vector<ImplementationID> implIDs;
-		network->nodes().for_each<Node::Implementation>([&](Node::Implementation& impl) {
-			YAML::Emitter out;
-			out << YAML::BeginMap;
-			impl->serializer().serialize(out);
-			out << YAML::EndMap;
-			
-			nodeTexts.push_back(out.c_str());
-			implIDs.push_back(impl->implementationID());
-			impl.reset();
-		});
-		
+		globalMessenger().send_message(PluginsWillReload{});
 		Registry::instance().eraseWithPluginID(plugin.id());
 		plugin.lib.close();
 		plugin = Plugin(utl::dynamic_library(plugin.lib.current_path()));
-		
-		std::size_t textIndex = 0;
-		network->nodes().for_each<Node::Implementation, Node::ID>([&](Node::Implementation& impl,
-																	  auto nodeID) {
-			ImplementationID const implementationID = implIDs[textIndex];
-			impl = Registry::instance().createNodeImplementation(implementationID, nodeID);
-			
-			YAML::Node yamlNode = YAML::Load(nodeTexts[textIndex]);
-			impl->serializer().deserialize(yamlNode);
-			
-			++textIndex;
-		});
-		network->invalidateAllNodes();
+		globalMessenger().send_message(PluginsDidReload{});
 	}
 	
 	Plugin* PluginManager::getPlugin(utl::UUID id) {

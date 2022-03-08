@@ -135,6 +135,9 @@ namespace worldmachine {
 		/// The color to use for virtual shadows cast by raised objects on the screen.
 		mtl::double4 shadowColor;
 		
+		
+		///
+		std::array<mtl::double4, 6> logTextColors;
 	};
 	
 	namespace internal {

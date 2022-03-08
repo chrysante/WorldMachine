@@ -9,7 +9,6 @@
 #include "Core/Debug.hpp"
 #include "Core/Registry.hpp"
 
-#include "Network.hpp"
 #include "Node.hpp"
 #include "NodeDependencyMap.hpp"
 

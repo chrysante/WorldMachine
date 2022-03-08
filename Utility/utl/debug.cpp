@@ -9,12 +9,6 @@
 #include <iomanip>
 #include <ctime>
 
-
-//namespace utl {
-//	static utl::vector<> _global_loggers;
-//	void add_global_logger(std::ostream&)
-//}
-
 namespace utl::_private::debug {
 	
 	void _throw_runtime_error() {

@@ -4,7 +4,8 @@
 #include <mtl/mtl.hpp>
 
 #include "Core/Network/Network.hpp"
-#include "Core/Network/BuildSystem.hpp"
+#include "Core/BuildSystem.hpp"
+#include "Framework/Window.hpp"
 
 using namespace mtl::short_types;
 
@@ -34,24 +35,19 @@ namespace worldmachine {
 		ImGui::Text("%s", header.data());
 		ImGui::Checkbox("Square", &locked);
 		int2 resolution = highRes ? buildSystem->getResolution() : buildSystem->getPreviewResolution();
-		bool const changed = [&]{
-			if (ImGui::DragInt(highRes ? "X":"X_", &resolution.x, 1, 32, maxRes(highRes))) {
-				if (locked) {
-					resolution.y = resolution.x;
-				}
-				return true;
+		bool update = false;
+		if (ImGui::DragInt(highRes ? "X":"X_", &resolution.x, 1, 32, maxRes(highRes))) {
+			if (locked) {
+				resolution.y = resolution.x;
 			}
-			if (!locked) {
-				if (ImGui::DragInt(highRes?"Y":"Y_", &resolution.y, 1, 32, maxRes(highRes))) {
-					return true;
-				}
-			}
-			else {
-				
-			}
-			return false;
-		}();
-		if (changed && !buildSystem->isBuilding()) {
+			update = true;
+		}
+		if (!locked && ImGui::DragInt(highRes?"Y":"Y_", &resolution.y, 1, 32, maxRes(highRes))) {
+			update = true;
+		}
+		
+		if (update) {
+			getWindow()->sendMessage(BuildCancelRequest{});
 			network->invalidateAllNodes(highRes ? BuildType::highResolution : BuildType::preview);
 			if (highRes) {
 				buildSystem->setResolution(resolution);

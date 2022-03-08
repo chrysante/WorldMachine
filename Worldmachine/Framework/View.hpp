@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <optional>
 #include <mtl/mtl.hpp>
+
 
 #include "Event.hpp"
 
@@ -38,6 +40,9 @@ namespace worldmachine {
 		Window* getWindow() { return _window; }
 		Window const* getWindow() const { return _window; }
 		
+		void setPadding(mtl::double2 padding) { _padding = padding; }
+		void setBackgroundColor(mtl::double4 color) { _backgroundColor = color; }
+		
 	private:
 		virtual void init() {}
 		virtual void display() {}
@@ -67,6 +72,8 @@ namespace worldmachine {
 		Window* _window;
 		bool _show = true;
 		bool _isFocused = false;
+		mtl::double2 _padding = 5;
+		std::optional<mtl::double4> _backgroundColor;
 	};
 	
 	void displayImage(void const* texture, mtl::double2 size);
@@ -74,7 +81,7 @@ namespace worldmachine {
 	class InputSurfaceView: public virtual View {
 		friend class Window;
 	protected:
-		InputSurfaceView(): View(std::string{}) {}
+		InputSurfaceView();
 		void displayTexture(void const* texture) { worldmachine::displayImage(texture, this->size()); }
 		
 		mtl::double2 mouseLocationInView() const;

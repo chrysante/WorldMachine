@@ -11,7 +11,7 @@
 #include "Core/PluginManager.hpp"
 #include "Core/Network/Network.hpp"
 #include "Core/Network/NetworkSerialize.hpp"
-#include "Core/Network/BuildSystem.hpp"
+#include "Core/BuildSystem.hpp"
 
 #include "NetworkView.hpp"
 #include "DebugNetworkView.hpp"
@@ -30,24 +30,27 @@ namespace worldmachine {
 	{
 		PluginManager::instance().loadPlugin(executablePath().parent_path() / "libWMBuiltinNodes.dylib");
 		
+		network = Network::create();
 		
-		network = utl::make_unique_ref<Network>();
-		
-		buildSystem = utl::make_unique_ref<BuildSystem>();
+		buildSystem = BuildSystem::create();
 		buildSystem->setViewInvalidator([this]{
 			invalidate();
 		});
+		auto buildSystemListeners = buildSystem->makeListeners();
+		auto ids = getMessenger().register_listeners(buildSystemListeners.begin(), buildSystemListeners.end());
+		for (auto& id: ids) storeListenerID(std::move(id));
+		
 		
 #if WM_DEBUGLEVEL
-		addView(new DebugNetworkView(network.get(), buildSystem.get()));
+		addView(new DebugNetworkView(network.get()));
 #else
-		addView(new NetworkView(network.get(), buildSystem.get()));
+		addView(new NetworkView(network.get()));
 #endif
-		addView(new ImageView2D(network.get(), buildSystem.get()));
-		addView(new HeightmapView3D(network.get(), buildSystem.get()));
-		addView(new NodeSettingsView(network.get(), buildSystem.get()));
+		addView(new ImageView2D(network.get()));
+		addView(new HeightmapView3D(network.get()));
+		addView(new NodeSettingsView(network.get()));
 		addView(new BuildSettingsView(network.get(), buildSystem.get()));
-		addView(new PluginsView(network.get()));
+		addView(new PluginsView());
 		addView(new NetworkListView(network.get()));
 		addView(new DebugConsole());
 	}
@@ -93,7 +96,7 @@ namespace worldmachine {
 				
 			case KeyCode::period:
 				/// TODO: edit framework to recognize modifiers for this key and change this shortcut to CMD + .
-				buildSystem->cancelCurrentBuild();
+				sendMessage(BuildCancelRequest{});
 				return true;
 				
 			default:
@@ -127,11 +130,11 @@ namespace worldmachine {
 				buildNetworkSelected();
 			}
 			if (ImGui::MenuItem("Cancel Build", "CMD + .", false, buildSystem->isBuilding())) {
-				buildSystem->cancelCurrentBuild();
+				sendMessage(BuildCancelRequest{});
 			}
 			
 			if (ImGui::MenuItem("Invalidate all")) {
-				buildSystem->cancelCurrentBuild();
+				sendMessage(BuildCancelRequest{});
 				network->invalidateAllNodes();
 			}
 			ImGui::EndMenu();
@@ -152,19 +155,25 @@ namespace worldmachine {
 	}
 	
 	void MainWindow::buildNetwork() {
-		if (buildSystem->isBuilding()) {
+		if (network->isBuilding()) {
 			WM_Log(error, "Build Action is currently active");
 			return;
 		}
-		buildSystem->build(network.get());
+		sendMessage(BuildRequest{
+			BuildType::highResolution, network.get()
+		});
 	}
 	
 	void MainWindow::buildNetworkSelected() {
-		if (buildSystem->isBuilding()) {
+		if (network->isBuilding()) {
 			WM_Log(error, "Build Action is currently active");
 			return;
 		}
-		buildSystem->build(network.get(), network->IDsFromIndices(network->selectedIndices()));
+		sendMessage(BuildRequest{
+			BuildType::highResolution,
+			network.get(),
+			network->IDsFromIndices(network->selectedIndices())
+		});
 	}
 	
 	

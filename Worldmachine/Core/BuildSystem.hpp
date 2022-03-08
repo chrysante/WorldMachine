@@ -16,6 +16,8 @@
 #include <utl/dispatch_queue.hpp>
 #include <mtl/mtl.hpp>
 #include <utl/stopwatch.hpp>
+#include <utl/messenger.hpp>
+#include <utl/memory.hpp>
 
 namespace worldmachine {
 	
@@ -26,20 +28,17 @@ namespace worldmachine {
 		enum struct Signal {
 			none = 0, sleep, start, finished, cancelBuild
 		};
+		
+		BuildSystem(); // private
+		
 	public:
+		static utl::unique_ref<BuildSystem> create();
+		
 		~BuildSystem();
 		
-		void build(Network* network);
-		void build(Network* network,
-				   utl::vector<utl::UUID> nodes);
+		bool isBuilding() const { return _info.isBuilding(); }
+		BuildType currentBuildType() const { return _info.type(); }
 		
-		void buildPreview(Network* network);
-		void buildPreview(Network* network,
-						  utl::vector<utl::UUID> nodes);
-		
-		bool isBuilding() const { return _isBuilding.load(); }
-		BuildType currentBuildType() const { return _buildType; }
-		void cancelCurrentBuild();
 		
 		void setViewInvalidator(utl::function<void()> f) {
 			_invalidateView = f;
@@ -62,10 +61,14 @@ namespace worldmachine {
 			dispatchQueue.set_num_threads(n);
 		}
 		
-		double progress() const { return (double)_progress.load() / UINT_MAX; }
+		double progress() const { return _info.progress(); }
+		
+		utl::vector<utl::listener> makeListeners();
 		
 	private:
-		void buildImpl(Network* network, utl::vector<utl::UUID> nodes, BuildType);
+		void build(BuildType, Network* network, utl::vector<utl::UUID> nodes);
+		void cancelCurrentBuild();
+		
 		void buildCoordinator(Network* network,
 							  utl::vector<utl::UUID> nodes);
 		void coordSleep(std::unique_lock<std::mutex>&);
@@ -87,7 +90,7 @@ namespace worldmachine {
 		
 		void nodeBuildFinished(Network* network, utl::UUID nodeID, bool success);
 		
-		void cleanup();
+		void cleanup(Network*);
 		
 		void invalidateView() {
 			if (_invalidateView)
@@ -95,7 +98,7 @@ namespace worldmachine {
 		}
 		
 		mtl::usize2 currentBuildResolution() const {
-			return _buildType == BuildType::highResolution ?
+			return _info.type() == BuildType::highResolution ?
 				resolution : previewResolution;
 		}
 		
@@ -104,7 +107,6 @@ namespace worldmachine {
 		std::mutex coordMutex;
 		std::condition_variable coordCV;
 		std::condition_variable mainCV;
-		std::atomic_bool _isBuilding = false;
 		
 #if WM_DEBUGLEVEL
 		utl::concurrent_dispatch_queue dispatchQueue{2};
@@ -118,11 +120,10 @@ namespace worldmachine {
 		std::size_t totalTargetBuildCount = 0;
 		std::size_t nodeBuildsCompleted = 0;
 		Signal signal = Signal::start;
-		BuildType _buildType;
 		mtl::usize2 resolution = WM_DEBUGLEVEL == 2 ? 256 : 1024;
 		mtl::usize2 previewResolution = WM_DEBUGLEVEL == 2 ? 64 : 256;
 		utl::precise_stopwatch stopwatch;
-		std::atomic<unsigned> _progress = 0;
+		BuildInfo _info;
 	};
 	
 }

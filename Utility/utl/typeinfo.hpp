@@ -15,14 +15,14 @@ namespace utl {
 	template <typename T>
 	constexpr auto __ctti_nameof_impl() {
 		auto constexpr prettySize = std::size(__PRETTY_FUNCTION__);
-		auto constexpr beginSize = std::size("auto utl::_private::_ctti_nameof_impl() [T = ")-1;
+		auto constexpr beginSize = std::size("auto utl::__ctti_nameof_impl() [T = ")-1;
 		
 		utl::basic_static_string pretty = __PRETTY_FUNCTION__;
 		return pretty.template substr<prettySize - beginSize-2>(beginSize);
 	}
 	
 	template <typename T>
-	inline constexpr auto __ctti_nameof = _ctti_nameof_impl<T>();
+	inline constexpr auto __ctti_nameof = __ctti_nameof_impl<T>();
 	
 	std::string __demangle_name(char const*);
 	

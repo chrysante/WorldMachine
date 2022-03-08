@@ -15,11 +15,11 @@ filter "configurations:Development or Release"
 filter {}
 
 filter { "configurations:Debug" }
-    defines { "WM_DEBUGLEVEL=2", "WM_LOGLEVEL=2" }
+    defines { "WM_DEBUGLEVEL=2", "WM_LOGLEVEL=2", "UTL_DEBUG_LEVEL=2" }
 filter { "configurations:Development" }
-    defines { "WM_DEBUGLEVEL=1", "WM_LOGLEVEL=1" }
+    defines { "WM_DEBUGLEVEL=1", "WM_LOGLEVEL=1", "UTL_DEBUG_LEVEL=1" }
 filter { "configurations:Release"  }
-    defines { "WM_DEBUGLEVEL=0", "WM_LOGLEVEL=0" }
+    defines { "WM_DEBUGLEVEL=0", "WM_LOGLEVEL=0", "UTL_DEBUG_LEVEL=0" }
 filter {}
 
 includedirs {
@@ -184,10 +184,14 @@ filter {}
     
 
 files { 
-    "Utility/**.hpp",
-    "Utility/**.cpp",
-    "Utility/**.cc",
+    "Utility/utl/**.hpp",
+    "Utility/utl/**.cpp",
+    "Utility/utl/**.cc",
+    "Utility/mtl/**.hpp",
+    "Utility/mtl/**.cpp",
+    "Utility/mtl/**.cc",
 }
+
 
 -----------------------------------------------------------------------------------------
 -- Project ImGui

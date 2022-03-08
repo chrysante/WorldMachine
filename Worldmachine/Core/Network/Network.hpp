@@ -13,14 +13,17 @@
 #include <utl/vector.hpp>
 #include <utl/concepts.hpp>
 #include <utl/UUID.hpp>
+#include <utl/messenger.hpp>
 
 #include <span>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <array>
+#include <atomic>
 
-#include "BuildSystemFwd.hpp"
+#include "Core/BuildSystemFwd.hpp"
+#include "Core/PluginManagerFwd.hpp"
 #include "SharedNetworkTypes.hpp"
 #include "Node.hpp"
 #include "Pin.hpp"
@@ -76,16 +79,16 @@ namespace worldmachine {
 		}
 		
 		static mtl::float2 pinPosition(mtl::float2 nodePosition,
-											 mtl::float2 nodeSize,
-											 PinKind pinKind,
-											 std::size_t pinIndex,
-											 NodeParameters const& params);
+									   mtl::float2 nodeSize,
+									   PinKind pinKind,
+									   std::size_t pinIndex,
+									   NodeParameters const& params);
 		
 		static mtl::disk<> pinDisk(mtl::float2 nodePosition,
-										 mtl::float2 nodeSize,
-										 PinKind,
-										 std::size_t pinIndex,
-										 NodeParameters const& params);
+								   mtl::float2 nodeSize,
+								   PinKind,
+								   std::size_t pinIndex,
+								   NodeParameters const& params);
 		
 		TypeSetter* typeSetter() { return _typeSetter.get(); }
 	private:
@@ -175,6 +178,9 @@ namespace worldmachine {
 			return f();
 		}
 		
+		BuildInfo const& buildInfo() const { return _buildInfo; }
+		bool isBuilding() const { return buildInfo().isBuilding(); }
+		
 	protected:
 		bool testNodeFlag(std::size_t nodeIndex, NodeFlags flag) const {
 			return !!(nodes().get<NodeFlags>(nodeIndex) & flag);
@@ -197,6 +203,12 @@ namespace worldmachine {
 		using Selection = SelectionManager;
 		
 		std::mutex _mutex;
+		
+		friend class BuildSystem;
+		BuildInfo _buildInfo;
+		
+		utl::vector<std::pair<ImplementationID, std::string>> _storedImplementationState;
+		utl::listener_id_bag _listenerIDs;
 	};
 	
 	/// MARK: - HitResult
@@ -231,8 +243,7 @@ namespace worldmachine {
 		};
 	};
 	
-	// TODO: rename to SelectOperation
-	enum struct Operation {
+	enum struct SelectOperation {
 		setUnion,
 		setDifference,
 		setIntersection,
@@ -278,7 +289,11 @@ namespace worldmachine {
 	class Network:
 		public NetworkBase
 	{
+		Network(); // private
+		
 	public:
+		static utl::unique_ref<Network> create();
+		
 		/// Modification and interaction
 		NetworkHitResult hitTest(mtl::float2 hitPositionWS) const;
 		
@@ -296,12 +311,11 @@ namespace worldmachine {
 		bool toggleSelectNode(std::size_t nodeIndex); // -> true iff node is selected after call
 		void clearSelection();
 		
-		void setRectangleSelection(mtl::rectangle<float>, Operation);
-		void applyRectangleSelection(Operation);
+		void setRectangleSelection(mtl::rectangle<float>, SelectOperation);
+		void applyRectangleSelection(SelectOperation);
 		
 		void moveToTop(std::size_t nodeIndex); 
 		void moveSelected(mtl::float2 offset);
-		
 		
 		/// Traversal and queries
 		utl::small_vector<std::size_t>  gatherLeaveNodes();
