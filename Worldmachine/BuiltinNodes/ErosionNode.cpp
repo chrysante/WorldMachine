@@ -2,7 +2,7 @@
 
 #include <imgui/imgui.h>
 #include <random>
-#include <utl/md_array.hpp>
+#include <utl/mdarray.hpp>
 #include <utl/math.hpp>
 
 using namespace mtl;
@@ -34,7 +34,7 @@ namespace worldmachine {
 		utl::vector<utl::vector<int>> erosionBrushIndices;
 		utl::vector<utl::vector<float>> erosionBrushWeights;
 		
-		utl::md_array<utl::vector<float>, 2> brushWeights;
+		utl::mdarray<utl::vector<float>, 2> brushWeights;
 		
 		std::mt19937_64 rng{ std::random_device{}() };
 

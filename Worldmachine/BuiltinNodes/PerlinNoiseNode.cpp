@@ -2,7 +2,7 @@
 
 #include <imgui/imgui.h>
 #include <mtl/mtl.hpp>
-#include <utl/md_array.hpp>
+#include <utl/mdarray.hpp>
 #include <utl/stdio.hpp>
 #include <utl/stopwatch.hpp>
 #include <utl/scope_guard.hpp>
@@ -77,7 +77,7 @@ namespace worldmachine {
 		struct BuildData {
 			utl::small_vector<float2, 16> scaleData;
 			utl::small_vector<float, 16> strengthData;
-			utl::vector<utl::md_array<utl::vector<float>, 2>> pointData;
+			utl::vector<utl::mdarray<utl::vector<float>, 2>> pointData;
 		};
 	
 		void perlinNoise(ImageView<float> img, std::size_t yStart, std::size_t yEnd,
@@ -145,8 +145,8 @@ namespace worldmachine {
 			return result;
 		}
 		
-		utl::md_array<utl::vector<float>, 2> calculatePointData(usize2 imgSize, float2 scale, int seed) {
-			utl::md_array<utl::vector<float>, 2> pointData(std::max((std::size_t)std::ceil(scale.x), imgSize.x) + 1,
+		utl::mdarray<utl::vector<float>, 2> calculatePointData(usize2 imgSize, float2 scale, int seed) {
+			utl::mdarray<utl::vector<float>, 2> pointData(std::max((std::size_t)std::ceil(scale.x), imgSize.x) + 1,
 														   std::max((std::size_t)std::ceil(scale.y), imgSize.y) + 1);
 			auto const totalPoints = pointData.size().fold(utl::multiplies);
 			if (totalPoints > 8*8*1024*1024) {
