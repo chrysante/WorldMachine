@@ -21,4 +21,9 @@ namespace ImGui {
 		TextColored(color, "%s", utl::format(formatString, UTL_FORWARD(args)...).data());
 	}
 	
+	bool SliderDouble2(const char *label,
+					   double *v,
+					   double v_min,
+					   double v_max);
+	
 }

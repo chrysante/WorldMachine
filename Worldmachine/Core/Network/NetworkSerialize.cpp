@@ -33,7 +33,7 @@ namespace YAML {
 		}
 		
 		static bool decode(Node const& node, mtl::vector<T, Size, O>& v) {
-			utl_guard (node.IsSequence() && node.size() == Size) else { return false; }
+			if (!node.IsSequence() || node.size() != Size) { return false; }
 			
 			UTL_WITH_INDEX_SEQUENCE((I, Size), {
 				v = { node[I].as<T>()... };

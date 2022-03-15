@@ -19,6 +19,8 @@ namespace worldmachine {
 	class Network;
 	class TypeSetter;
 	
+	using NodeNameRenderData = std::array<LetterData, nodeNameMaxRenderSize>;
+	
 	class NetworkRenderer: public Renderer {
 	public:
 		NetworkRenderer(utl::ref<TypeSetter>);
@@ -47,6 +49,9 @@ namespace worldmachine {
 		void createNodeBuffers(std::size_t nodeCount);
 		void createEdgeProxyBuffer(std::size_t edgeCount);
 		
+		void updateNodeBuffers(Network const&);
+		void createNodeNameRenderData(Network const&);
+		
 	private:
 		MTLARCPointer<MTL::DepthStencilState>   depthStencilStateNone;
 		MTLARCPointer<MTL::DepthStencilState>   depthStencilStateOpaque;
@@ -63,6 +68,8 @@ namespace worldmachine {
 		MTLARCPointer<MTL::Buffer>              nodeNameBuffer;
 		std::size_t                             nodeBufferSize = 0;
 		MTLARCPointer<MTL::RenderPipelineState> nodeNamePipelineState;
+		
+		utl::vector<NodeNameRenderData> nodeNameRenderData;
 		
 		// selectionRectangle
 		MTLARCPointer<MTL::RenderPipelineState> selectionPipelineState;

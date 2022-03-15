@@ -24,6 +24,12 @@ namespace worldmachine {
 		renderer = utl::make_unique_ref<HeightmapRenderer3D>();
 	}
 	
+	void HeightmapView3D::displayControls() {
+		if (center != 0 && ImGui::Button("Reset Center")) {
+			center = 0;
+		}
+	}
+	
 	void HeightmapView3D::updateImage(Image const& img) {
 		if (img.dataType() == DataType::float1) {
 			imageIsHeightmap = true;
@@ -52,9 +58,11 @@ namespace worldmachine {
 			0,                        0,                       0, 1
 		};
 		
-		float3 eyePosition = viewDist * float3(0, -std::cos(viewAngle), std::sin(viewAngle));
+		float3 eyePosition = viewDist * float3(0,
+											   -std::cos(viewAngle),
+											   std::sin(viewAngle)) + center;
 		float4x4 view = mtl::look_at<right_handed>(eyePosition,
-									 float3(0, 0, 0),
+									 center,
 									 float3(0, 0, 1));
 		float const aspectRatio = this->size().x / this->size().y;
 		float4x4 projection = mtl::infinite_perspective<right_handed>(fieldOfView,
@@ -85,8 +93,12 @@ namespace worldmachine {
 		displayTexture(renderer->renderedImage());
 	}
 	
-	void HeightmapView3D::rightMouseDragged(MouseDragEvent event) {
+	void HeightmapView3D::mouseDragged(MouseDragEvent event) {
 		rotate(event.offset);
+	}
+	
+	void HeightmapView3D::rightMouseDragged(MouseDragEvent event) {
+		mouseDragged(event);
 	}
 	
 	void HeightmapView3D::scrollWheel(ScrollEvent event) {
@@ -95,6 +107,28 @@ namespace worldmachine {
 		}
 		else {
 			zoom(- utl::signed_pow(event.offset.y, 0.666) / 100);
+		}
+	}
+	
+	bool HeightmapView3D::keyDown(KeyEvent event) {
+		return false;
+		float const offset = moveSpeed;
+		switch (event.keyCode) {
+			case KeyCode::W:
+				center.y += offset;
+				return true;
+			case KeyCode::A:
+				center.x -= offset;
+				return true;
+			case KeyCode::S:
+				center.y -= offset;
+				return true;
+			case KeyCode::D:
+				center.x += offset;
+				return true;
+				
+			default:
+				return false;
 		}
 	}
 	
@@ -125,9 +159,11 @@ namespace worldmachine {
 		ImGui::Checkbox("Clamp Height to 0-1 Range", &clampHeightToZeroOneRange);
 		ImGui::Separator();
 		ImGui::DragFloat("Field of View", &fieldOfView, 0.001, 0, mtl::constants<float>::pi);
+		
 		ImGui::Text("rotationAngle = %f", rotationAngle);
 		ImGui::Text("viewAngle = %f", viewAngle);
 		ImGui::Text("viewDist = %f", viewDist);
+		ImGui::DragFloat("Move Speed", &moveSpeed, 0.1);
 		ImGui::End();
 	}
 	

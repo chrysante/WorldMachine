@@ -6,6 +6,8 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
+#include "ImGuiExt.hpp"
+
 #include "Core/Debug.hpp"
 
 using namespace mtl::short_types;
@@ -13,6 +15,13 @@ using namespace mtl::short_types;
 namespace worldmachine {
 	
 	/// MARK: - View
+	View::View(std::string name):
+		_name(std::move(name))
+	{
+		static unsigned id = 1;
+		_childID = id += 10;
+	}
+	
 	void View::displayInactive(std::string_view msg) {
 		double2 const textSize = (float2)ImGui::CalcTextSize(msg.data());
 		ImGui::SetCursorPos((this->size() - textSize) / 2);
@@ -20,28 +29,56 @@ namespace worldmachine {
 	}
 	
 	void View::_doDisplay() {
-		if (_beginDisplay()) {
-			
-			_endDisplay();
-		}
-	}
-	
-	bool View::_beginDisplay() {
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, _padding);
-		utl::scope_guard guardPadding = []{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, _isInputSurfaceView ? double2{0, 0} : _padding);
+		utl::armed_scope_guard guardPadding = []{
 			ImGui::PopStyleVar();
 		};
 		
-		if (_backgroundColor) {
-			ImGui::PushStyleColor(ImGuiCol_WindowBg, *_backgroundColor);
+//		if (_backgroundColor) {
+//			ImGui::PushStyleColor(ImGuiCol_WindowBg, *_backgroundColor);
+//		}
+//		utl::scope_guard guardBackgroundColor = [this]{
+//			if (_backgroundColor) {
+//				ImGui::PopStyleColor();
+//			}
+//		};
+		
+		_mainMenuBar();
+		
+		_isFocused = false;
+		if (_show) {
+			ImGui::Begin(_name.c_str(), &_show);
+			_isFocused |= ImGui::IsWindowFocused();
+			ImGui::BeginChild(_childID);
+			_isFocused |= ImGui::IsWindowFocused();
+			
+			_readViewInfo();
+			
+			
+			
+			guardPadding.execute();
+			_reallyDoDisplay();
+
+			
+			ImGui::EndChild();
+			
+			ImGui::End();
 		}
-		utl::scope_guard guardBackgroundColor = [this]{
-			if (_backgroundColor) {
-				ImGui::PopStyleColor();
-			}
-		};
+	}
+	
+	void View::_reallyDoDisplay() {
+		auto* w = (ImGuiWindow*)_imguiWindow;
 		
-		
+		w->Pos += ImVec2{5, 5};
+		w->Size -= ImVec2{10, 10};
+		display();
+		if (hasContextMenu() && ImGui::BeginPopupContextWindow("Context Menu")) {
+			contextMenu();
+			ImGui::EndPopup();
+		}
+	}
+	
+	void View::_mainMenuBar() {
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("View")) {
 			if (ImGui::MenuItem(utl::format("Show {}", name()).data(),
@@ -52,23 +89,6 @@ namespace worldmachine {
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
-		_isFocused = false;
-		if (_show) {
-			ImGui::Begin(_name.c_str(), &_show);
-			_isFocused |= ImGui::IsWindowFocused();
-			ImGui::BeginChild(_childID);
-			_isFocused |= ImGui::IsWindowFocused();
-			this->_readViewInfo();
-			return true;
-		}
-		return false;
-	}
-	
-	void View::_endDisplay() {
-		this->display();
-
-		ImGui::EndChild();
-		ImGui::End();
 	}
 	
 	void View::_readViewInfo() {
@@ -89,25 +109,47 @@ namespace worldmachine {
 	}
 	
 	
+	
+	
 	/// MARK: - InputSurfaceView
 	static bool detectViewportInput();
+	static bool detectViewportInput(ImGuiButtonFlags);
 	
 	InputSurfaceView::InputSurfaceView(): View(std::string{}) {
-		setPadding(0);
+		_isInputSurfaceView = true;
+//		setPadding(0);
 #if WM_DEBUGLEVEL
 //		setBackgroundColor({ 1, 0, 1, 1 });
 #endif
 	}
 	
-	void InputSurfaceView::_doDisplay() {
-		if (View::_beginDisplay()) {
-			_hasMouseInputCapture = detectViewportInput();
-			_endDisplay();
+	void InputSurfaceView::_reallyDoDisplay() {
+		
+		ImGui::SetCursorPos({});
+		display();
+		
+		auto* w = ((ImGuiWindow*)_imguiWindow);
+		w->Pos += _padding;
+		w->Size -= 2 * _padding;
+		ImGui::SetCursorPos({});
+		displayControls();
+		w->Pos -= _padding;
+		w->Size += 2 * _padding;
+		ImGui::SetCursorPos({});
+		_hasMouseInputCapture = detectViewportInput();
+		
+		if (hasContextMenu() && ImGui::BeginPopupContextWindow("Context Menu")) {
+			contextMenu();
+			ImGui::EndPopup();
 		}
 	}
 	
 	mtl::double2 InputSurfaceView::mouseLocationInView() const {
 		return transformLocationToViewSpace(ImGui::GetIO().MousePos);
+	}
+	
+	void InputSurfaceView::displayTexture(void const* texture) {
+		ImGui::Image(const_cast<void*>(texture), this->size());
 	}
 	
 	template<typename T>
@@ -175,7 +217,13 @@ return
 		}
 	}
 	
+	
+	
 	static bool detectViewportInput() {
+		return detectViewportInput(ImGuiButtonFlags_MouseButtonRight | ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle);
+	}
+	
+	static bool detectViewportInput(ImGuiButtonFlags flags) {
 		using namespace ImGui;
 		
 		// save to restore later
@@ -193,7 +241,7 @@ return
 		if (!ItemAdd(bb, id))
 			return {};
 
-		auto const buttonFlags = ImGuiButtonFlags_MouseButtonRight | ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle;
+		auto const buttonFlags = flags;
 		
 		bool pressed, held, hovered;
 		pressed = ButtonBehavior(bb, id, &hovered, &held, buttonFlags);

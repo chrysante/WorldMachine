@@ -93,7 +93,7 @@ namespace worldmachine {
 		}
 		
 		utl::vector<PinDescriptor>& get(PinKind ifKind) {
-			return utl::as_mutable(utl::as_const(this)->get(ifKind));
+			return utl::as_mutable(utl::as_const(*this).get(ifKind));
 		}
 	};
 	

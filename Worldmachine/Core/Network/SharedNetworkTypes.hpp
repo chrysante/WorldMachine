@@ -1,13 +1,13 @@
 #pragma once
 
 
-#include <utl/operator_definition_macros.hpp>
+#include <utl/__common.hpp>
 #include "Framework/ShaderMath.hpp"
 
 #if WORLDMACHINE(CPP)
 
 #include <utl/bit.hpp>
-#include <utl/array.hpp>
+#include <array>
 #include <iosfwd>
 #include "Core/Debug.hpp"
 #include "Core/Network/Pin.hpp"
@@ -73,7 +73,7 @@ namespace worldmachine {
 			static_assert(utl::to_underlying(PinKind::parameterInput) == 2);
 			static_assert(utl::to_underlying(PinKind::maskInput) == 3);
 			
-			return utl::bit_cast<utl::array<T, 4>>(*this)[utl::to_underlying(ifKind)];
+			return utl::bit_cast<std::array<T, 4>>(*this)[utl::to_underlying(ifKind)];
 		}
 		
 #endif // WORLDMACHINE(CPP)
@@ -96,7 +96,7 @@ namespace worldmachine {
 		built                = 1 << 2,
 		previewBuilt         = 1 << 3,
 	};
-	UTL_ENUM_BITWISE_OPERATORS_DEF(NodeFlags);
+	UTL_ENUM_OPERATORS(NodeFlags);
 	
 	struct EdgeParameters {
 		float width;

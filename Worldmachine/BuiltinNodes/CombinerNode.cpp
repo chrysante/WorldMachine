@@ -1,6 +1,7 @@
 #include "Core/Plugin.hpp"
 
 #include <imgui/imgui.h>
+#include <utl/math.hpp>
 
 namespace worldmachine {
 	

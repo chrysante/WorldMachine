@@ -2,7 +2,7 @@
 
 #include <thread>
 #include <random>
-#include <utl/function.hpp>
+#include <utl/functional.hpp>
 #include <utl/hashmap.hpp>
 #include <imgui/imgui.h>
 

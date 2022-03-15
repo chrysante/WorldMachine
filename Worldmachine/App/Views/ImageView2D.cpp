@@ -31,7 +31,7 @@ namespace worldmachine {
 		auto const displaySize = ratio * (this->size() / ratio).fold(utl::min);
 		
 		ImGui::SetCursorPos((this->size() - displaySize) / 2);
-		worldmachine::displayImage(renderer->renderedImage(), displaySize);
+		ImGui::Image(renderer->renderedImage(), displaySize);
 	}
 	
 	bool ImageView2D::hasCachedImage() const {

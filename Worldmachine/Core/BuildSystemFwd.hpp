@@ -3,7 +3,7 @@
 #include <exception>
 
 #include <atomic>
-#include <utl/operator_definition_macros.hpp>
+#include <utl/__common.hpp>
 #include <utl/messenger.hpp>
 #include <utl/vector.hpp>
 #include <utl/UUID.hpp>
@@ -19,7 +19,7 @@ namespace worldmachine {
 		preview = 1 << 1,
 		all = (1 << 0) | (1 << 1)
 	};
-	UTL_ENUM_BITWISE_OPERATORS_DEF(BuildType);
+	UTL_ENUM_OPERATORS(BuildType);
 	
 	
 	class BuildInfo {

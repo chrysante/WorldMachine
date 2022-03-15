@@ -1,6 +1,6 @@
 #include "ImageRenderer2D.hpp"
 
-#include <utl/array.hpp>
+#include <array>
 
 #include "Framework/Vertex2D.hpp"
 

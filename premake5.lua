@@ -1,3 +1,8 @@
+newoption {
+    trigger = "tests",
+    description = "Generate Unit Test Projects"
+ }
+
 -----------------------------------------------------------------------------------------
 -- Workspace Worldmachine
 -----------------------------------------------------------------------------------------
@@ -70,6 +75,10 @@ filter "system:macosx"
     xcodebuildsettings {
         ["INFOPLIST_FILE"] = "$(SRCROOT)/Platform/macOS/info.plist"
     }
+filter { "system:macosx", "configurations:Debug or Development" }
+    xcodebuildsettings {
+        ["ONLY_ACTIVE_ARCH"] = "YES"
+    }
 filter {}
 
 --filter "files:Worldmachine/App/Resource/**"
@@ -125,6 +134,37 @@ files {
     "Worldmachine/Core/**.cpp"
 }
 
+
+-----------------------------------------------------------------------------------------
+-- Project WMCoreUT
+-----------------------------------------------------------------------------------------
+filter "options:tests"
+
+    project "WMCoreUnitTests"
+    location "UnitTests/Core"
+    kind "ConsoleApp"
+    language "C++"
+
+    files { 
+        "UnitTests/Core/main.cpp",
+        "UnitTests/Core/**.t.hpp",
+        "UnitTests/Core/**.t.cpp"
+    }
+
+    links { "WMCore", "WMFramework", "Utility", "YAML", "ImGui" }
+    filter "system:macosx"
+    links {
+        "AppKit.framework",
+        "Metal.framework",
+        "MetalKit.framework",
+        "GameController.framework",
+        "CoreImage.framework",
+        "UniformTypeIdentifiers.framework"
+    }
+    filter {}
+
+filter {}
+
 -----------------------------------------------------------------------------------------
 -- Project WMFramework
 -----------------------------------------------------------------------------------------
@@ -172,26 +212,7 @@ postbuildcommands {
 -----------------------------------------------------------------------------------------
 -- Project Utility
 -----------------------------------------------------------------------------------------
-project "Utility"
-location "Utility"
-kind "StaticLib"
-language "C++"
-filter "system:macosx" 
-    xcodebuildsettings { 
-
-    }
-filter {}
-    
-
-files { 
-    "Utility/utl/**.hpp",
-    "Utility/utl/**.cpp",
-    "Utility/utl/**.cc",
-    "Utility/mtl/**.hpp",
-    "Utility/mtl/**.cpp",
-    "Utility/mtl/**.cc",
-}
-
+include "Utility/utility_project.lua"
 
 -----------------------------------------------------------------------------------------
 -- Project ImGui
@@ -217,7 +238,6 @@ files {
     "Vendor/imgui/imgui_tables.cpp",
     "Vendor/imgui/imgui_widgets.cpp",
     "Vendor/imgui/imgui.cpp",
-    "Utility/**.cpp"
 }
 
 filter "system:macosx" 
@@ -249,7 +269,7 @@ files {
 project "*"
 filter "system:macosx" 
     xcodebuildsettings { 
-        ["GCC_ENABLE_FIX_AND_CONTINUE"] = "NO",
+        ["GCC_ENABLE_FIX_AND_CONTINUE"] = nil,
         ["CLANG_ENABLE_OBJC_WEAK"] = "YES",
         ["CODE_SIGN_IDENTITY"] = "-",
         ["CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING"] = "YES",

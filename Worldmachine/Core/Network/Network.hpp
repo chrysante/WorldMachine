@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Framework/Typography/TypeSetter.hpp"
-
 #include "Core/Debug.hpp"
 
 #include <mtl/mtl.hpp>
@@ -64,7 +62,6 @@ namespace worldmachine {
 		NodeCollection();
 		
 		std::size_t addNode(NodeDescriptor);
-		void setNodeName(std::size_t nodeIndex, std::string);
 		
 		std::size_t nodeCount() const { return m_nodes.size(); }
 		
@@ -90,11 +87,9 @@ namespace worldmachine {
 								   std::size_t pinIndex,
 								   NodeParameters const& params);
 		
-		TypeSetter* typeSetter() { return _typeSetter.get(); }
 	private:
 		NodeContainerType m_nodes;
 		NodeParameters m_nodeParams = defaultNodeParameters();
-		utl::ref<TypeSetter> _typeSetter;
 	};
 	
 	/// MARK: - SelectionManager
@@ -372,7 +367,7 @@ namespace worldmachine {
 			CycleChecker(std::size_t beginNodeIndex): beginNodeIndex(beginNodeIndex), thisVisitCount{ 0 } {}
 			
 			void operator()(std::size_t nodeIndex) {
-				utl_guard (nodeIndex != beginNodeIndex || thisVisitCount++ == 0) else {
+				if (nodeIndex == beginNodeIndex && thisVisitCount++ != 0) {
 					throw NetworkCycleError();
 				}
 			}
@@ -427,7 +422,7 @@ namespace worldmachine {
 																	 std::size_t endNodeIndex,
 																	 std::size_t endPinIndex,
 																	 PinKind endPinKind) {
-											 utl_guard (endNodeIndex == nodeIndex) else { return; }
+											 if (endNodeIndex != nodeIndex) { return; }
 											 _traverseUpstreamNodesImpl<Reverse>(_this, beginNodeIndex, f);
 										 });
 		if constexpr (Reverse) {
@@ -478,7 +473,7 @@ namespace worldmachine {
 																	  PinKind beginPinKind,
 																	  std::size_t endNodeIndex,
 																	  std::size_t endPinIndex) {
-											 utl_guard (beginNodeIndex == nodeIndex) else { return; }
+											 if (beginNodeIndex != nodeIndex) { return; }
 											 _traverseDownstreamNodesImpl<Reverse>(_this, endNodeIndex, f);
 										 });
 		if constexpr (Reverse) {

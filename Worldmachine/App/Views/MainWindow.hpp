@@ -1,7 +1,7 @@
 #include "Framework/Window.hpp"
 
 #include <utl/memory.hpp>
-#include <utl/filesystem.hpp>
+#include <filesystem>
 #include <optional>
 
 namespace worldmachine {
@@ -31,7 +31,7 @@ namespace worldmachine {
 	private:
 		utl::unique_ref<Network> network;
 		utl::unique_ref<BuildSystem> buildSystem;
-		std::optional<utl::path> currentFilePath;
+		std::optional<std::filesystem::path> currentFilePath;
 		
 #if WM_DEBUGLEVEL
 		bool _showImGuiDemo = false;

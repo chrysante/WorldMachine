@@ -7,6 +7,8 @@
 #include <imgui/imgui.h>
 #include <utl/format.hpp>
 
+using namespace mtl::short_types;
+
 namespace ImGui {
 	
 	
@@ -48,6 +50,17 @@ namespace ImGui {
 		ImGui::Text("%s", utl::format("{: ^{}}{}", "", label.length(), rows[2].data()).data());
 		ImGui::Text("%s", utl::format("{: ^{}}{}", "", label.length(), rows[3].data()).data());
 		ImGui::PopFont();
+	}
+	
+	bool SliderDouble2(const char *label,
+					   double *v,
+					   double v_min,
+					   double v_max) {
+		auto& doubleVector = *reinterpret_cast<double2*>(v);
+		float2 fv = doubleVector;
+		bool result = ImGui::SliderFloat2(label, fv.data(), v_min, v_max);
+		doubleVector = fv;
+		return result;
 	}
 	
 }

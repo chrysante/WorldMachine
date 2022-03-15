@@ -12,17 +12,13 @@ namespace worldmachine {
 	class Window;
 	class InputSurfaceView;
 	
+	/// MARK: - class View
 	class View {
 		friend class InputSurfaceView;
 		friend class Window;
 		
 	public:
-		View(std::string name):
-			_name(std::move(name))
-		{
-			static unsigned id = 1;
-			_childID = id++;
-		}
+		View(std::string name);
 		virtual ~View() = default;
 		
 		std::string_view name() const { return _name; }
@@ -46,23 +42,22 @@ namespace worldmachine {
 	private:
 		virtual void init() {}
 		virtual void display() {}
+		virtual bool hasContextMenu() const { return false; }
+		virtual void contextMenu() {}
 		
 		virtual bool keyDown(KeyEvent) { return false; }
 		virtual bool keyUp(KeyEvent) { return false; }
 		
 	private:
-		virtual void _doDisplay();
-		
-		
-		/// To be used by base classes which are part of the framework
-		///  in order to override _doDisplay()
-		bool _beginDisplay();
-		void _endDisplay();
+		void _doDisplay();
+		virtual void _reallyDoDisplay();
 		
 		
 	private:
 		void _readViewInfo();
+		void _mainMenuBar();
 		bool _handleKeyEvent(KeyEvent, bool);
+		
 		
 	private:
 		std::string _name;
@@ -72,21 +67,23 @@ namespace worldmachine {
 		Window* _window;
 		bool _show = true;
 		bool _isFocused = false;
+		bool _isInputSurfaceView = false;
 		mtl::double2 _padding = 5;
 		std::optional<mtl::double4> _backgroundColor;
 	};
 	
-	void displayImage(void const* texture, mtl::double2 size);
-	
+	/// MARK: - class InputSurfaceView
 	class InputSurfaceView: public virtual View {
 		friend class Window;
 	protected:
 		InputSurfaceView();
-		void displayTexture(void const* texture) { worldmachine::displayImage(texture, this->size()); }
+		void displayTexture(void const* nativeTextureHandle);
 		
 		mtl::double2 mouseLocationInView() const;
 		
 	private:
+		virtual void displayControls() {}
+		
 		virtual void mouseDown(MouseDownEvent) {}
 		virtual void rightMouseDown(MouseDownEvent) {}
 		virtual void otherMouseDown(MouseDownEvent) {}
@@ -104,7 +101,7 @@ namespace worldmachine {
 		virtual void tick(TickEvent) {}
 		
 	private:
-		void _doDisplay() override;
+		virtual void _reallyDoDisplay() override;
 		void _handleEvent(EventUnion);
 		
 		mtl::double2 transformLocationToViewSpace(mtl::double2) const;

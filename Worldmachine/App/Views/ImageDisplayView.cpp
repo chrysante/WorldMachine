@@ -1,7 +1,7 @@
 #include "ImageDisplayView.hpp"
 
 #include <imgui/imgui.h>
-#include <typeinfo>
+#include <utl/typeinfo.hpp>
 #include <mtl/mtl.hpp>
 
 #include "Framework/Window.hpp"
@@ -40,7 +40,7 @@ namespace worldmachine {
 		}
 		else if (activeNode->type() != NodeType::image) {
 			displayInactive(utl::format("Selected Node is of incompatible type '{}'",
-										typeid(*activeNode).name()));
+										utl::dynamic_nameof(*activeNode)));
 			return;
 		}
 		// static cast because dynamic_cast has problems across shared lib boundaries.
@@ -72,10 +72,10 @@ namespace worldmachine {
 			currentRenderedNodeID = activeImageNode->nodeID();
 			this->displayImage(); /* virtual call to child */
 			
-			ImGui::SetCursorPos({ 10, 10 });
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 255, 255));
-			ImGui::Text("Preview");
-			ImGui::PopStyleColor();
+//			ImGui::SetCursorPos({ 10, 10 });
+//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 255, 255));
+//			ImGui::Text("Preview");
+//			ImGui::PopStyleColor();
 			return;
 		}
 		getWindow()->sendMessage(BuildRequest{

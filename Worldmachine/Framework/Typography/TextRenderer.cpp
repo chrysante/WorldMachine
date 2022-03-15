@@ -7,8 +7,8 @@
 #include "Vertex2D.hpp"
 #include "Renderer.hpp"
 #include <string>
+#include <array>
 #include <utl/stopwatch.hpp>
-#include <utl/array.hpp>
 
 
 using namespace MTL;

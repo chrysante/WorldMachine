@@ -20,6 +20,7 @@ namespace worldmachine {
 	struct PinIndex;
 	class NetworkRenderer;
 	class BuildSystem;
+	class TypeSetter;
 	
 	class NetworkView: public InputSurfaceView, public NodeView {
 		friend class DebugNetworkView;
@@ -46,6 +47,9 @@ namespace worldmachine {
 		void scrollWheel(ScrollEvent) override;
 		void magnify(MagnificationEvent) override;
 		void mouseMoved(MouseMoveEvent) override;
+		
+		bool hasContextMenu() const override;
+		void contextMenu() override;
 		
 		void handleBackgroundClick(MouseDownEvent);
 		void handleEdgeClick(MouseDownEvent, std::size_t edgeIndex);
@@ -85,7 +89,7 @@ namespace worldmachine {
 		[[nodiscard]] mtl::double2 directionVStoWS(mtl::double2) const;
 	
 	private:
-		utl::function<void()> contextMenu;
+		utl::function<void()> contextMenuFn;
 		utl::function<void()> tooltip;
 		
 		void backgroundContextMenu();
@@ -107,6 +111,7 @@ namespace worldmachine {
 		Network* network;
 		utl::unique_ref<NetworkRenderer> renderer;
 		NetworkUniforms uniforms{};
+		utl::ref<TypeSetter> typeSetter;
 		mtl::double4x4 projectionMatrix, viewMatrix, inverseViewMatrix;
 		double portalScale = 1;
 		std::optional<SelectionRectangle> selectionRectangle;

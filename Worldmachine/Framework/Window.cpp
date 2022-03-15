@@ -98,7 +98,7 @@ namespace worldmachine {
 	}
 	
 	View* Window::findViewByName(std::string_view name) {
-		return utl::as_mutable(utl::as_const(*this).findViewByName(name));
+		return const_cast<View*>(utl::as_const(*this).findViewByName(name));
 	}
 	
 	View const* Window::findViewByName(std::string_view name) const {

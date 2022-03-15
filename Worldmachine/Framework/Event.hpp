@@ -1,7 +1,10 @@
 #pragma once
 
 #include <mtl/mtl.hpp>
-#include <utl/operator_definition_macros.hpp>
+#include <utl/__common.hpp>
+#include <array>
+#include <iosfwd>
+
 
 namespace worldmachine {
 	
@@ -83,7 +86,7 @@ namespace worldmachine {
 		function   = 1 << 7  // Set if any function key is pressed.
 	};
 	
-	UTL_ENUM_BITWISE_OPERATORS_DEF(EventModifierFlags);
+	UTL_ENUM_OPERATORS(EventModifierFlags);
 	
 	struct Event {
 		EventModifierFlags modifierFlags;
@@ -150,8 +153,8 @@ namespace worldmachine {
 		return (int)type != 0 && (int)type <= (int)EventType::magnify;
 	}
 	
-	inline char const* toString(EventType e) {
-		return std::array{
+	inline std::ostream& operator<<(std::ostream& str, EventType e) {
+		return str << std::array{
 			"mouseDown",
 			"rightMouseDown",
 			"otherMouseDown",

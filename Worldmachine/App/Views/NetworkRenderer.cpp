@@ -105,7 +105,7 @@ namespace worldmachine {
 						   =  device->newBuffer((uint32_t)nodeCount * sizeof(PinCount<>),     ResourceStorageModeManaged);
 		nodeBuildProgressBuffer
 		                   =  device->newBuffer((uint32_t)nodeCount * sizeof(Node::BuildProgress),  ResourceStorageModeManaged);
-		nodeNameBuffer     =  device->newBuffer((uint32_t)nodeCount * sizeof(Node::NameRenderData), ResourceStorageModeManaged);
+		nodeNameBuffer     =  device->newBuffer((uint32_t)nodeCount * sizeof(NodeNameRenderData), ResourceStorageModeManaged);
 		
 	}
 	
@@ -144,23 +144,25 @@ namespace worldmachine {
 		auto* const renderCommandEncoder = commandBuffer->renderCommandEncoder(renderPassDesc.get());
 		
 		// fill node Buffers
-		if (nodeBufferSize < network.nodeCount()) {
-			createNodeBuffers(network.nodeCount());
-			nodeBufferSize = network.nodeCount();
-		}
+//		if (nodeBufferSize < network.nodeCount()) {
+//			createNodeBuffers(network.nodeCount());
+//			nodeBufferSize = network.nodeCount();
+//		}
 		
-		if (!network.nodes().empty()) {
-			auto copyNodeBuffer = [&]<typename T>(Buffer* buffer) {
-				worldmachine::fillBuffer(buffer, network.nodes().data<T>(), network.nodeCount() * sizeof(T));
-			};
-			copyNodeBuffer.operator()<Node::Position>(nodePositionBuffer.get());
-			copyNodeBuffer.operator()<Node::Size>(nodeSizeBuffer.get());
-			copyNodeBuffer.operator()<NodeCategory>(nodeCategoryBuffer.get());
-			copyNodeBuffer.operator()<Node::Flags>(nodeFlagsBuffer.get());
-			copyNodeBuffer.operator()<PinCount<>>(nodePinCountBuffer.get());
-			copyNodeBuffer.operator()<Node::BuildProgress>(nodeBuildProgressBuffer.get());
-			copyNodeBuffer.operator()<Node::NameRenderData>(nodeNameBuffer.get());
-		}
+		updateNodeBuffers(network);
+		
+//		if (!network.nodes().empty()) {
+//			auto copyNodeBuffer = [&]<typename T>(Buffer* buffer) {
+//				worldmachine::fillBuffer(buffer, network.nodes().data<T>(), network.nodeCount() * sizeof(T));
+//			};
+//			copyNodeBuffer.operator()<Node::Position>(nodePositionBuffer.get());
+//			copyNodeBuffer.operator()<Node::Size>(nodeSizeBuffer.get());
+//			copyNodeBuffer.operator()<NodeCategory>(nodeCategoryBuffer.get());
+//			copyNodeBuffer.operator()<Node::Flags>(nodeFlagsBuffer.get());
+//			copyNodeBuffer.operator()<PinCount<>>(nodePinCountBuffer.get());
+//			copyNodeBuffer.operator()<Node::BuildProgress>(nodeBuildProgressBuffer.get());
+//			copyNodeBuffer.operator()<NameRenderData>(nodeNameBuffer.get());
+//		}
 		// fill edge Buffer
 		if (edgeProxyBufferSize < network.edgeCount()) {
 			createEdgeProxyBuffer(network.edgeCount());
@@ -364,6 +366,69 @@ namespace worldmachine {
 
 		commandEncoder->setFragmentBuffer(uniformBuffer.get(), 0, 0);
 		commandEncoder->drawPrimitives(PrimitiveTypeTriangle, 0ul, 6);
+	}
+	
+	template <typename Field>
+	static void copySingleNodeBuffer(Network const& network, Buffer* buffer) {
+		fillBuffer(buffer, network.nodes().data<Field>(), network.nodeCount() * sizeof(Field));
+	}
+	
+	void NetworkRenderer::updateNodeBuffers(Network const& network) {
+		// fill node Buffers
+		if (nodeBufferSize < network.nodeCount()) {
+			createNodeBuffers(network.nodeCount());
+			nodeBufferSize = network.nodeCount();
+		}
+		
+		if (network.nodes().empty()) {
+			return;
+		}
+		
+		copySingleNodeBuffer<Node::Position>(network, nodePositionBuffer.get());
+		copySingleNodeBuffer<Node::Size>(network, nodeSizeBuffer.get());
+		copySingleNodeBuffer<NodeCategory>(network, nodeCategoryBuffer.get());
+		copySingleNodeBuffer<Node::Flags>(network, nodeFlagsBuffer.get());
+		copySingleNodeBuffer<PinCount<>>(network, nodePinCountBuffer.get());
+		copySingleNodeBuffer<Node::BuildProgress>(network, nodeBuildProgressBuffer.get());
+		
+		createNodeNameRenderData(network);
+		
+		fillBuffer(nodeNameBuffer.get(), nodeNameRenderData.data(),
+				   sizeof(NodeNameRenderData) * nodeNameRenderData.size());
+	}
+	
+	static std::string shortenName(std::string name) {
+		if (name.size() <= nodeNameMaxRenderSize) {
+			  return name;
+		  }
+		  else {
+			  name.resize(nodeNameMaxRenderSize);
+			  *(name.end() - 1) = '.';
+			  *(name.end() - 2) = '.';
+			  *(name.end() - 3) = '.';
+			  return name;
+		  }
+	  }
+	
+	void NetworkRenderer::createNodeNameRenderData(Network const& network) {
+		nodeNameRenderData.resize(network.nodeCount());
+		
+		for (std::size_t i = 0; i < network.nodeCount(); ++i) {
+			std::string const nameShortened = shortenName(network.nodes().get<Node::Name>(i));
+			
+			auto const letterData = typeSetter->typeset(nameShortened, {
+				FontWeight::regular, FontStyle::roman
+			}, TextAlignment::center);
+			WM_Assert(letterData.letters.size() <= nodeNameMaxRenderSize, "Letter count excess");
+
+			NodeNameRenderData letterDataArray{};
+
+			std::copy(letterData.letters.begin(),
+					  letterData.letters.end(),
+					  letterDataArray.begin());
+			
+			nodeNameRenderData[i] = letterDataArray;
+		}
 	}
 	
 }

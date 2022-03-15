@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <yaml-cpp/yaml.h>
 
-#include "Framework/Typography/TextRenderer.hpp"
-
 #include "Core/Debug.hpp"
 #include "Core/Registry.hpp"
 #include "Core/GlobalMessenger.hpp"
@@ -18,8 +16,7 @@ using namespace mtl::short_types;
 namespace worldmachine {
 	
 	/// MARK: - NodeCollection
-	NodeCollection::NodeCollection():
-		_typeSetter(utl::make_ref<TypeSetter>())
+	NodeCollection::NodeCollection()
 	{
 		
 	}
@@ -32,7 +29,6 @@ namespace worldmachine {
 		desc.position.z = nodes().size();
 		
 		nodes().push_back(desc.name,
-						  std::array<LetterData, nodeNameMaxRenderSize>{},
 						  desc.category,
 						  desc.position,
 						  nodeSize(m_nodeParams, pinCount),
@@ -43,40 +39,9 @@ namespace worldmachine {
 						  std::move(impl),
 						  desc.pinDescriptorArray);
 		
-		
-		
+
 		std::size_t const nodeIndex = nodes().size() - 1;
-		setNodeName(nodeIndex, desc.name);
 		return nodeIndex;
-	}
-	
-	void NodeCollection::setNodeName(std::size_t nodeIndex, std::string name) {
-		std::string const nameShortened = [&] {
-			if (name.size() <= nodeNameMaxRenderSize) {
-				return name;
-			}
-			else {
-				name.resize(nodeNameMaxRenderSize);
-				*(name.end() - 1) = '.';
-				*(name.end() - 2) = '.';
-				*(name.end() - 3) = '.';
-				return name;
-			}
-		}();
-		
-		auto const letterData = typeSetter()->typeset(nameShortened, {
-			FontWeight::regular, FontStyle::roman
-		}, TextAlignment::center);
-		WM_Assert(letterData.letters.size() <= nodeNameMaxRenderSize, "Letter count excess");
-		
-		utl::array<LetterData, nodeNameMaxRenderSize> letterDataArray{};
-		
-		std::copy(letterData.letters.begin(),
-				  letterData.letters.end(),
-				  letterDataArray.begin());
-		
-		nodes().get<Node::Name>(nodeIndex) = name;
-		nodes().get<Node::NameRenderData>(nodeIndex) = letterDataArray;
 	}
 	
 	mtl::float2 NodeCollection::pinPosition(mtl::float2 nodePosition,
@@ -376,7 +341,7 @@ namespace worldmachine {
 		auto const dataTypeY = nodes().get<NodePinDescriptorArray>(y.nodeIndex).get(y.pinKind).at(y.pinIndex).dataType();
 		
 		
-		WM_Assert(utl::popcount(utl::to_underlying(dataTypeX)) < 2, "More than one data type flag is set in output");
+		WM_Assert(std::popcount(utl::to_underlying(dataTypeX)) < 2, "More than one data type flag is set in output");
 		if (!(dataTypeX & dataTypeY)) {
 			throw std::runtime_error(utl::format("Incompatible data types \"{}\" and \"{}\".",
 												 dataTypeX, dataTypeY));
@@ -671,7 +636,7 @@ namespace worldmachine {
 	
 	utl::small_vector<std::size_t> Network::_gatherNodesImpl(auto&& cond) {
 		utl::small_vector<std::size_t> result;
-		for (std::size_t nodeIndex: utl::range(nodes().size())) {
+		for (std::size_t nodeIndex: utl::iota(0, nodes().size())) {
 			if (cond(nodeIndex)) {
 				result.push_back(nodeIndex);
 			}
@@ -704,7 +669,7 @@ namespace worldmachine {
 													 std::size_t endNodeIndex,
 													 std::size_t endPinIndex,
 													 PinKind endPinKind) {
-							 utl_guard (endNodeIndex == nodeIndex) else {
+							 if (endNodeIndex != nodeIndex) {
 								 return;
 							 }
 							 auto const pushBack = [&](auto& container) {

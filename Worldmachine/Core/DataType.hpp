@@ -17,7 +17,7 @@ namespace worldmachine {
 		float4 = 1 << 3  /* 8 */
 	};
 
-	UTL_ENUM_BITWISE_OPERATORS_DEF(DataType);
+	UTL_ENUM_OPERATORS(DataType);
 	
 	inline std::ostream& operator<<(std::ostream& str, DataType t) {
 		auto const Int = utl::to_underlying(t);

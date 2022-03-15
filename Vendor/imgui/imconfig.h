@@ -85,7 +85,10 @@
 
 #define IM_VEC2_CLASS_EXTRA                                              \
 		template <mtl::real_scalar T, mtl::vector_options O>             \
-        ImVec2(mtl::vector<T, 2, O> const& f) { x = f.x; y = f.y; }      \
+        ImVec2(mtl::vector<T, 2, O> const& f) {                          \
+			x = f.__mtl_at(0);                                           \
+			y = f.__mtl_at(1);                                           \
+}                                                                        \
 		template <mtl::real_scalar T, mtl::vector_options O>             \
 		operator mtl::vector<T, 2, O>() const { return { x, y }; }       \
 		operator mtl::float2() const { return { x, y }; }
@@ -93,7 +96,10 @@
 #define IM_VEC4_CLASS_EXTRA                                              \
 		template <mtl::real_scalar T, mtl::vector_options O>             \
 		ImVec4(mtl::vector<T, 4, O> const& f) {                          \
-			x = f.__at(0); y = f.__at(1); z = f.__at(2); w = f.__at(3);  \
+			x = f.__mtl_at(0);                                           \
+			y = f.__mtl_at(1);                                           \
+			z = f.__mtl_at(2);                                           \
+			w = f.__mtl_at(3);                                           \
 		}                                                                \
 		template <mtl::real_scalar T, mtl::vector_options O>             \
 		operator mtl::vector<T, 4, O>() const { return { x, y, z, w }; } \

@@ -33,7 +33,7 @@ namespace worldmachine {
 				  buffer);
 		
 		if (ImGui::InputText("Name", buffer, bufferLength)) {
-			network()->setNodeName(nodeIndex, buffer);
+			network()->nodes().get<Node::Name>(nodeIndex) = buffer;
 		}
 		ImGui::Separator();
 		if (activeNode->displayControls()) {

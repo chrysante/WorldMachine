@@ -6,6 +6,7 @@
 #include <utl/scope_guard.hpp>
 
 #include "Framework/Window.hpp"
+#include "Framework/Typography/TypeSetter.hpp"
 
 #include "Core/Network/Network.hpp"
 #include "Core/BuildSystemFwd.hpp"
@@ -48,19 +49,20 @@ namespace worldmachine {
 	NetworkView::NetworkView(Network* network):
 		View("Network"),
 		NodeView(network),
-		network(network)
+		network(network),
+		typeSetter(utl::make_ref<TypeSetter>())
 	{}
 
 	NetworkView::~NetworkView() = default;
 	
 	void NetworkView::init() {
-		renderer = utl::make_unique_ref<NetworkRenderer>(network->typeSetter()->ref());
+		renderer = utl::make_unique_ref<NetworkRenderer>(typeSetter);
 		
 		setDefaultUniformValues();
 	}
 	
 	void NetworkView::setDefaultUniformValues() {
-		FontMetrics const fontMetrics = network->typeSetter()->metrics(defaultFont(), 64).value();
+		FontMetrics const fontMetrics = typeSetter->metrics(defaultFont(), 64).value();
 		
 		uniforms.viewProjectionMatrix = {};
 		uniforms.node = network->nodeParams();
@@ -133,13 +135,7 @@ namespace worldmachine {
 					   selectionRectangle);
 		
 
-		displayTexture(renderer->renderedImage());
-
-		
-		if (contextMenu && ImGui::BeginPopupContextWindow("Context Menu")) {
-			contextMenu();
-			ImGui::EndPopup();
-		}
+		ImGui::Image(renderer->renderedImage(), this->size());
 		
 		if (tooltip) {
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 5, 5 });
@@ -252,6 +248,15 @@ namespace worldmachine {
 	}
 	
 	/// MARK: - Input
+	bool NetworkView::hasContextMenu() const {
+		return !!contextMenuFn;
+	}
+	
+	void NetworkView::contextMenu() {
+		contextMenuFn();
+	}
+	
+	
 	static SelectOperation chooseRectangleSelectOperation(EventModifierFlags flags) {
 		if (!!(flags & EventModifierFlags::super)) {
 			return SelectOperation::setSymmetricDifference;
@@ -449,17 +454,17 @@ namespace worldmachine {
 			auto const hitResult = network->hitTest(position);
 			switch (hitResult.type) {
 				case NetworkHitResult::Type::node:
-					contextMenu = [=] {
+					contextMenuFn = [=] {
 						nodeContextMenu(hitResult.node.index);
 					};
 					break;
 				case NetworkHitResult::Type::edge:
-					contextMenu = [=] {
+					contextMenuFn = [=] {
 						edgeContextMenu(hitResult.edge.index);
 					};
 					break;
 				case NetworkHitResult::Type::background:
-					contextMenu = [=] {
+					contextMenuFn = [=] {
 						backgroundContextMenu();
 					};
 					menuOpenedAtWS = position;
@@ -472,7 +477,7 @@ namespace worldmachine {
 	
 	void NetworkView::rightMouseDragged(MouseDragEvent event) {
 		portalParameters().position -= event.offset / portalScale;
-		_setContextMenu = [this](auto){ contextMenu = nullptr; };
+		_setContextMenu = [this](auto){ contextMenuFn = nullptr; };
 	}
 	
 	void NetworkView::rightMouseUp(MouseUpEvent event) {

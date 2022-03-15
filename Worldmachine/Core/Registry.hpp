@@ -4,7 +4,7 @@
 
 #include <utl/vector.hpp>
 #include <utl/hashmap.hpp>
-#include <utl/function.hpp>
+#include <utl/functional.hpp>
 #include <utl/memory.hpp>
 #include <utl/UUID.hpp>
 #include <type_traits>

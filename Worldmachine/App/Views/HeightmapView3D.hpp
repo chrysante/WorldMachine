@@ -14,6 +14,7 @@ namespace worldmachine {
 		HeightmapView3D(Network*);
 
 		void init() override;
+		void displayControls() override;
 		
 	private:
 		void updateImage(Image const&) override;
@@ -21,9 +22,11 @@ namespace worldmachine {
 //		bool hasCachedImage() const override;
 		
 		/// Input
+		void mouseDragged(MouseDragEvent) override;
 		void rightMouseDragged(MouseDragEvent) override;
 		void scrollWheel(ScrollEvent) override;
 		void magnify(MagnificationEvent) override;
+		bool keyDown(KeyEvent) override;
 		
 		void rotate(mtl::float2 offset);
 		void zoom(float offset);
@@ -33,6 +36,8 @@ namespace worldmachine {
 	private:
 		utl::unique_ref<HeightmapRenderer3D> renderer;
 		bool imageIsHeightmap = false;
+		mtl::float3 center = 0;
+		float moveSpeed = 0.1;
 		float rotationAngle = 0;
 		float viewAngle = mtl::constants<float>::pi / 8;
 		float viewDist = 3;

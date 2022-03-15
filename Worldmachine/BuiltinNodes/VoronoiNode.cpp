@@ -1,7 +1,7 @@
 #include "Core/Plugin.hpp"
 
 #include <imgui/imgui.h>
-#include <utl/mdvector_adaptor.hpp>
+#include <utl/md_array.hpp>
 #include <mtl/mtl.hpp>
 #include <utl/dynamic_dispatch.hpp>
 #include <random>
@@ -75,7 +75,7 @@ namespace worldmachine {
 	namespace {
 		
 		struct BuildData {
-			utl::mdvector_adaptor<float3, 3> pointData;
+			utl::md_array<utl::vector<float3>, 3> pointData;
 		};
 	
 		template <bool squareHeight, bool hasUVOffset>
@@ -120,11 +120,11 @@ namespace worldmachine {
 		}
 		
 		template <typename T, std::size_t N>
-		utl::mdvector_adaptor<T, N> calculatePointData(int seed, mtl::vector<int, N> size){
+		utl::md_array<utl::vector<T>, N> calculatePointData(int seed, mtl::vector<int, N> size){
 			auto engine = std::mt19937_64(seed);
 			std::uniform_real_distribution<float> dist;
 			
-			utl::mdvector_adaptor<T, N> pointData(size);
+			utl::md_array<utl::vector<T>, N> pointData(size);
 			
 			for (auto& p: pointData) {
 				p = T([&]{ return dist(engine); });
