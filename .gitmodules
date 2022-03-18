@@ -1,3 +1,4 @@
 [submodule "Utility"]
 	path = Utility
 	url = https://github.com/chrysante/Utility
+	branch = https://github.com/chrysante/Utility
