@@ -33,7 +33,7 @@ namespace worldmachine {
 		PinKind pinKind;
 	};
 	
-	using EdgeType = utl::soa::tuple<
+	using EdgeType = std::tuple<
 		Edge::BeginNodeIndex,
 		Edge::EndNodeIndex,
 		Edge::BeginPinIndex,

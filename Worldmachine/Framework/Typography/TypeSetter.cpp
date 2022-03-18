@@ -1,4 +1,3 @@
-#define WORLDMACHINE_GLYPH_DATA_IMPL 1
 #include "TypeSetter.hpp"
 
 #include "Core/Debug.hpp"
@@ -6,12 +5,73 @@
 
 #include <sstream>
 #include <fstream>
+#include <string>
 
 #include <nlohmann/json.hpp>
+#include <utl/utility.hpp>
 #include <utl/strcat.hpp>
 #include <utl/format.hpp>
+#include <utl/strcat.hpp>
+#include <utl/concepts.hpp>
 
 namespace worldmachine {
+	
+	static void from_json(const nlohmann::json& j, GlyphBoundingBox& g) {
+		if (j.is_null()) {
+			g = {};
+		}
+		else {
+			j.at("bottom").get_to(g.bottom);
+			j.at("top"   ).get_to(g.top);
+			j.at("left"  ).get_to(g.left);
+			j.at("right" ).get_to(g.right);
+		}
+	}
+	static void from_json(const nlohmann::json& j, GlyphData& d) {
+		if (j.is_null()) {
+			d = {};
+		}
+		else {
+			d.unicode = j["unicode"];
+			d.advance = j["advance"];
+			int const unicodeSpace = 32;
+			if (d.unicode == unicodeSpace) {
+				d.quadBounds = {};
+				d.atlasBounds = {};
+			}
+			else {
+				d.quadBounds  = j["planeBounds"];
+				d.atlasBounds = j["atlasBounds"];
+			}
+			d.size.x = d.quadBounds.right - d.quadBounds.left;
+			d.size.y = d.quadBounds.top   - d.quadBounds.bottom;
+		}
+	}
+	static void from_json(const nlohmann::json& j, FontMetrics& g) {
+		if (j.is_null()) {
+			g = {};
+		}
+		else {
+			g.emSize             = j["emSize"];
+			g.lineHeight         = j["lineHeight"];
+			g.ascender           = j["ascender"];
+			g.descender          = j["descender"];
+			g.underlineY         = j["underlineY"];
+			g.underlineThickness = j["underlineThickness"];
+		}
+	}
+	
+	static void from_json(const nlohmann::json& j, FontAtlasData& g) {
+		if (j.is_null()) {
+			g = {};
+		}
+		else {
+			g.distanceRange = j["distanceRange"];
+			g.size          = j["size"];
+			g.width         = j["width"];
+			g.height        = j["height"];
+		}
+	}
 	
 	struct {
 		std::size_t first, last;
@@ -142,8 +202,8 @@ namespace worldmachine {
 			return x;
 		};
 		return utl::format("SFPro-{}-{}-MTSDF-{}",
-						   capitalize(toString(font.weight)),
-						   capitalize(toString(font.style)),
+						   capitalize(utl::strcat(font.weight)),
+						   capitalize(utl::strcat(font.style)),
 						   size);
 	}
 	

@@ -54,10 +54,7 @@ namespace worldmachine {
 	class NodeCollection {
 	private:
 		using NodeContainerType = utl::structure_of_arrays<NodeSOAType>;
-		
-		template <typename T>
-		struct isRenderElement: std::integral_constant<bool, !std::is_same<NodeContainerType::function_type<T>, void>::value> {};
-		
+
 	public:
 		NodeCollection();
 		
@@ -182,15 +179,15 @@ namespace worldmachine {
 		}
 		
 		void setNodeFlag(std::size_t nodeIndex, NodeFlags flag) {
-			nodes().update<NodeFlags>(nodeIndex) |= flag;
+			nodes().get<NodeFlags>(nodeIndex) |= flag;
 		}
 		
 		void clearNodeFlag(std::size_t nodeIndex, NodeFlags flag) {
-			nodes().update<NodeFlags>(nodeIndex) &= ~flag;
+			nodes().get<NodeFlags>(nodeIndex) &= ~flag;
 		}
 		
 		void toggleNodeFlag(std::size_t nodeIndex, NodeFlags flag) {
-			nodes().update<NodeFlags>(nodeIndex) ^= flag;
+			nodes().get<NodeFlags>(nodeIndex) ^= flag;
 		}
 		
 		using Nodes     = NodeCollection;

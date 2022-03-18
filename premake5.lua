@@ -81,14 +81,11 @@ filter { "system:macosx", "configurations:Debug or Development" }
     }
 filter {}
 
---filter "files:Worldmachine/App/Resource/**"
---filter "files:**.png"
---    buildaction "Embed"
---filter {}
 -- Copy Resources
 filter "system:macosx"
     postbuildcommands {
         "{COPY} %{prj.location}/Resource/** %{cfg.targetdir}/Worldmachine.app/Contents/Resources",
+        --"{COPY} %{prj.location}/../Framework/Platform/MacOS/MainMenu.storyboard %{cfg.targetdir}/Worldmachine.app/Contents/Resources/MainMenu.storyboard",
         "{COPY} %{cfg.targetdir}/libWMBuiltinNodes.dylib %{cfg.targetdir}/Worldmachine.app/Contents/MacOS",
     }
 filter {}

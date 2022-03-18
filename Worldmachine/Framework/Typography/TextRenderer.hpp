@@ -4,17 +4,18 @@
 #include <utl/hashmap.hpp>
 #include <Metal/Metal.hpp>
 
-#include "Framework/MTLARCPointer.hpp"
+#include "Framework/Platform/MacOS/MTLARCPointer.hpp"
 #include "Framework/Typography/TypeSetter.hpp"
+#include "Framework/Renderer.hpp"
 
 namespace worldmachine {
 	
-	class TextRenderer {
+	class TextRenderer: Renderer {
 	public:
-		TextRenderer(TypeSetter const*, MTL::Device* device);
+		TextRenderer(utl::ref<TypeSetter const>);
 		
 	public:
-		MTL::RenderPipelineState* createPipelineState(MTL::Device*, MTL::Library*,
+		MTL::RenderPipelineState* createPipelineState(MTL::Library*,
 													  std::string_view vertexShader,
 													  std::string_view fragmentShader) const;
 
@@ -34,11 +35,10 @@ namespace worldmachine {
 		MTL::Buffer const* vertexBuffer() const { return _vertexBuffer.get(); }
 
 	private:
-		utl::hashmap<std::pair<Font, std::size_t>, GlyphRenderData, utl::hash<std::pair<Font, std::size_t>>> _glyphRenderData;
 		MTLARCPointer<MTL::SamplerState> _samplerState;
 		MTLARCPointer<MTL::Buffer> _vertexBuffer;
-		TypeSetter const* typeSetter;
-		MTL::Device* device;
+		utl::ref<TypeSetter const> typeSetter;
+		utl::hashmap<std::pair<Font, std::size_t>, GlyphRenderData, utl::hash<std::pair<Font, std::size_t>>> _glyphRenderData;
 	};
 	
 }

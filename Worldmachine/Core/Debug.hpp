@@ -2,7 +2,7 @@
 
 #include "Core/Base.hpp"
 
-#if WORLDMACHINE(CPP)
+#ifdef WORLDMACHINE_CPP
 
 #include <utl/fancy_debug.hpp>
 #include <utl/log.hpp>
@@ -34,4 +34,4 @@ namespace worldmachine {
 					   ::worldmachine::logLevelMask,   \
 					   __VA_ARGS__)
 
-#endif // WORLDMACHINE(CPP)
+#endif // WORLDMACHINE_CPP

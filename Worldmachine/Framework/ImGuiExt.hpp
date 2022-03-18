@@ -4,7 +4,9 @@
 #include <string_view>
 #include <utl/format.hpp>
 
-_Pragma("GCC system_header")
+#if __GNUC__ || __clang__
+#	pragma GCC system_header
+#endif
 
 namespace ImGui {
 	

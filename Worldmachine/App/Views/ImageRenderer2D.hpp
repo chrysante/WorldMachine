@@ -3,7 +3,7 @@
 #include <Metal/Metal.hpp>
 #include <mtl/mtl.hpp>
 
-#include "Framework/MTLARCPointer.hpp"
+#include "Framework/Platform/MacOS/MTLARCPointer.hpp"
 #include "Framework/Renderer.hpp"
 #include "Core/Image/Image.hpp"
 

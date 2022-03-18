@@ -2,14 +2,14 @@
 
 #include "../Core/Base.hpp"
 
-#if WORLDMACHINE(CPP)
+#ifdef WORLDMACHINE_CPP
 
 #include <mtl/mtl.hpp>
 namespace metal = mtl;
 
-#else // WORLDMACHINE(CPP)
+#else // WORLDMACHINE_CPP
 
 #include <metal_stdlib>
 
-#endif // WORLDMACHINE(CPP)
+#endif // WORLDMACHINE_CPP
 

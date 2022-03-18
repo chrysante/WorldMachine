@@ -46,12 +46,11 @@ namespace {
 
 namespace worldmachine {
 	
-	TextRenderer::TextRenderer(TypeSetter const* typeSetter, Device* device) {
+	TextRenderer::TextRenderer(utl::ref<TypeSetter const> typeSetter) {
 		this->typeSetter = typeSetter;
-		this->device = device;
 
-		_samplerState = createSamplerState(device);
-		_vertexBuffer = createVertexBuffer(device);
+		_samplerState = createSamplerState(device.get());
+		_vertexBuffer = createVertexBuffer(device.get());
 	}
 	
 	TextRenderer::GlyphRenderData TextRenderer::loadGlyphRenderData(Device* device, Font font, std::size_t size) {
@@ -72,10 +71,10 @@ namespace worldmachine {
 		return glyphRenderData;
 	}
 	
-	RenderPipelineState* TextRenderer::createPipelineState(Device* device, Library* library,
-																   std::string_view vertexShader,
-																   std::string_view fragmentShader) const {
-		
+	RenderPipelineState* TextRenderer::createPipelineState(Library* library,
+														   std::string_view vertexShader,
+														   std::string_view fragmentShader) const
+	{
 		auto desc = makeDefaultPipelineStateDescriptor(library, vertexShader, fragmentShader, true, true);
 		
 		NS::Error* errors;
@@ -85,7 +84,8 @@ namespace worldmachine {
 	TextRenderer::GlyphRenderData const* TextRenderer::glyphRenderData(Font font, std::size_t size) {
 		auto const itr = _glyphRenderData.find({ font, size });
 		if (itr == _glyphRenderData.end()) {
-			[[maybe_unused]] auto [newItr, success] =_glyphRenderData.insert_or_assign({font, size}, loadGlyphRenderData(device, font, size));
+			[[maybe_unused]] auto [newItr, success] = _glyphRenderData.insert_or_assign({ font, size },
+																						loadGlyphRenderData(device.get(), font, size));
 			bool _success = success;
 			WM_Assert(_success, "Failed to insert Glyph Render Data");
 			return &newItr->second;

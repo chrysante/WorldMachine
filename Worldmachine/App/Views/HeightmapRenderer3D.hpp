@@ -4,7 +4,7 @@
 #include <mtl/mtl.hpp>
 
 #include "Framework/Renderer.hpp"
-#include "Framework/MTLARCPointer.hpp"
+#include "Framework/Platform/MacOS/MTLARCPointer.hpp"
 #include "Core/Image/Image.hpp"
 
 #include "Shaders/HeightmapRenderUniforms.hpp"

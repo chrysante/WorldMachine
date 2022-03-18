@@ -33,13 +33,10 @@ namespace worldmachine {
 	
 	struct Node {
 		using Name                     = utl::named_type<std::string,	struct NameTag>;
-//		using NameRenderData           = utl::named_type<utl::array<LetterData, nodeNameMaxRenderSize>,
-//																		struct NameRenderDataTag>;
 		using Category                 = NodeCategory;
 		using Position                 = utl::named_type<mtl::float3,	struct PositionTag>;
 		using Size                     = utl::named_type<mtl::float2,	struct SizeTag>;
-		
-		using BuildProgress            = utl::named_type<float, struct BuildProgressTag>;
+		using BuildProgress            = utl::named_type<float,         struct BuildProgressTag>;
 		using PinCount                 = worldmachine::PinCount<>;
 		using Flags                    = NodeFlags;
 		using ID                       = utl::named_type<utl::UUID,		struct IDTag>;;
@@ -48,9 +45,8 @@ namespace worldmachine {
 	};
 	
 	
-	using NodeSOAType = utl::soa::tuple<
+	using NodeSOAType = std::tuple<
 		Node::Name,
-//		Node::NameRenderData,
 		Node::Category,
 		Node::Position,
 		Node::Size,

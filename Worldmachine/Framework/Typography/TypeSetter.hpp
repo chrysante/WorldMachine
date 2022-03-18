@@ -50,6 +50,7 @@ namespace worldmachine {
 			FontMetrics metrics;
 			FontAtlasData atlasData;
 		};
+		
 	private:
 		static std::uint32_t glyphIndex(char);
 		void parseFontData();

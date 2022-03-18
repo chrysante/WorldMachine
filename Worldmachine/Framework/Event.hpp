@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mtl/mtl.hpp>
-#include <utl/__common.hpp>
+#include <utl/common.hpp>
 #include <array>
 #include <iosfwd>
 
@@ -68,11 +68,6 @@ namespace worldmachine {
 		downArrow,
 		upArrow
 	};
-	
-	
-	
-	
-	
 	
 	enum struct EventModifierFlags: unsigned {
 		none       = 0,

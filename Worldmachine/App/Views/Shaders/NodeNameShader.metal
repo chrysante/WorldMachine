@@ -10,15 +10,15 @@
 using namespace metal;
 using namespace worldmachine;
 
-vertex TextVertex nodeNameVertexShader(device float2 const* vertexBuffer       [[ buffer(0) ]],
-									   device LetterData const* letterBuffer   [[ buffer(1) ]],
-									   device GlyphData const* glyphBuffer     [[ buffer(2) ]],
-									   device NetworkUniforms const& uniforms  [[ buffer(3) ]],
-									   device LabelRenderData const& labelData [[ buffer(4) ]],
-									   device float3 const* nodePositionBuffer [[ buffer(5) ]],
-									   device float2 const* nodeSizeBuffer     [[ buffer(6) ]],
-									   uint vertexID                           [[ vertex_id ]],
-									   uint instanceID                         [[ instance_id ]]) {
+vertex TextVertex nodeNameVertexShader(device float2 const* vertexBuffer         [[ buffer(0) ]],
+									   device LetterData const* letterBuffer     [[ buffer(1) ]],
+									   device GlyphData const* glyphBuffer       [[ buffer(2) ]],
+									   device NetworkUniforms const& uniforms    [[ buffer(3) ]],
+									   device LabelRenderData const& labelData   [[ buffer(4) ]],
+									   device float3 const* nodePositionBuffer   [[ buffer(5) ]],
+									   device float2 const* nodeSizeBuffer       [[ buffer(6) ]],
+									   uint vertexID                             [[ vertex_id ]],
+									   uint instanceID                           [[ instance_id ]]) {
 	auto vertexIn = vertexBuffer[vertexID % 6];
 	
 	auto const textSize = labelData.size;

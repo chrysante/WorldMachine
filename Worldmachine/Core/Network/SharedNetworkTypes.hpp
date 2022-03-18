@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include <utl/__common.hpp>
+#include <utl/common.hpp>
 #include "Framework/ShaderMath.hpp"
 
-#if WORLDMACHINE(CPP)
+#ifdef WORLDMACHINE_CPP
 
 #include <utl/bit.hpp>
 #include <array>
@@ -12,12 +12,12 @@
 #include "Core/Debug.hpp"
 #include "Core/Network/Pin.hpp"
 
-#endif // WORLDMACHINE(CPP)
+#endif // WORLDMACHINE_CPP
 
 
 namespace worldmachine {
 	
-	WORLDMACHINE(CONSTANT) unsigned nodeNameMaxRenderSize = 32;
+	WM_CONSTANT unsigned nodeNameMaxRenderSize = 32;
 
 	enum struct NodeCategory: int {
 		generator = 0,
@@ -27,7 +27,7 @@ namespace worldmachine {
 		parameter,
 		count
 	};
-#if WORLDMACHINE(CPP)
+#ifdef WORLDMACHINE_CPP
 	inline std::ostream& operator<<(std::ostream& str, NodeCategory c) {
 		WM_BoundsCheck((int)c, 0, (int)NodeCategory::count);
 		char const* values[] = {
@@ -65,7 +65,7 @@ namespace worldmachine {
 		T parameterInput;
 		T maskInput;
 		
-#if WORLDMACHINE(CPP)
+#ifdef WORLDMACHINE_CPP
 		
 		T get(PinKind ifKind) const {
 			static_assert(utl::to_underlying(PinKind::input) == 0);
@@ -76,7 +76,7 @@ namespace worldmachine {
 			return utl::bit_cast<std::array<T, 4>>(*this)[utl::to_underlying(ifKind)];
 		}
 		
-#endif // WORLDMACHINE(CPP)
+#endif // WORLDMACHINE_CPP
 		
 		template <typename U>
 		constexpr operator PinCount<U>() const {

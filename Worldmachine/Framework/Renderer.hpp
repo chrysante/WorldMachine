@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Metal/Metal.hpp>
-#include "MTLARCPointer.hpp"
+#include "Framework/Platform/MacOS/MTLARCPointer.hpp"
 #include <string>
 #include <mtl/mtl.hpp>
 #include "Vertex2D.hpp"

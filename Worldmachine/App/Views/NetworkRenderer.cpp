@@ -22,7 +22,7 @@ namespace worldmachine {
 		useDepthBuffer = true;
 		/// TODO: expose this in the API
 		MSAA = 1;
-		textRenderer = utl::make_ref<TextRenderer>(typeSetter.get(), device.get());
+		textRenderer = utl::make_ref<TextRenderer>(typeSetter);
 		
 		MTLARCPointer dsDesc = DepthStencilDescriptor::alloc()->init();
 		dsDesc->setDepthWriteEnabled(false);
@@ -58,8 +58,7 @@ namespace worldmachine {
 			nodeShadowPipelineState = device->newRenderPipelineState(desc.get(), &errors);
 		}
 		
-		nodeNamePipelineState = textRenderer->createPipelineState(device.get(),
-																  lib.get(),
+		nodeNamePipelineState = textRenderer->createPipelineState(lib.get(),
 																  "nodeNameVertexShader",
 																  "nodeNameFragmentShader");
 		

@@ -355,7 +355,7 @@ namespace worldmachine {
 							  std::optional<std::size_t> edgeToRemove) {
 		std::optional<EdgeType> removedEdge;
 		if (edgeToRemove) {
-			removedEdge = edges()[*edgeToRemove].copy();
+			removedEdge = edges()[*edgeToRemove];
 			edges().erase(*edgeToRemove);
 		}
 		this->edges().push_back(from.nodeIndex,
@@ -551,7 +551,7 @@ namespace worldmachine {
 	
 	void Network::moveSelected(mtl::float2 offset) {
 		utl::for_each(this->Selection::indices, [&](auto index) {
-			this->nodes().update<Node::Position>(index).xy += offset;
+			this->nodes().get<Node::Position>(index).xy += offset;
 		});
 		
 		// move edges
@@ -636,7 +636,7 @@ namespace worldmachine {
 	
 	utl::small_vector<std::size_t> Network::_gatherNodesImpl(auto&& cond) {
 		utl::small_vector<std::size_t> result;
-		for (std::size_t nodeIndex: utl::iota(0, nodes().size())) {
+		for (std::size_t nodeIndex: utl::iota<std::size_t>(0, nodes().size())) {
 			if (cond(nodeIndex)) {
 				result.push_back(nodeIndex);
 			}
