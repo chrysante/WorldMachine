@@ -1,7 +1,3 @@
-// Dear ImGui: standalone example application for OSX + Metal.
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
@@ -19,184 +15,9 @@
 #include <imgui/backends/imgui_impl_osx.h>
 
 #include "Core/Debug.hpp"
-#include "Window.hpp"
-#include "ResourceUtil.hpp"
-#include "Event.hpp"
-
-static worldmachine::KeyCode translateKeyCode(int keyCode) {
-	switch (keyCode) {
-	   case kVK_ANSI_A:              return worldmachine::KeyCode::A;
-	   case kVK_ANSI_S:              return worldmachine::KeyCode::S;
-	   case kVK_ANSI_D:              return worldmachine::KeyCode::D;
-	   case kVK_ANSI_F:              return worldmachine::KeyCode::F;
-	   case kVK_ANSI_H:              return worldmachine::KeyCode::H;
-	   case kVK_ANSI_G:              return worldmachine::KeyCode::G;
-	   case kVK_ANSI_Z:              return worldmachine::KeyCode::Z;
-	   case kVK_ANSI_X:              return worldmachine::KeyCode::X;
-	   case kVK_ANSI_C:              return worldmachine::KeyCode::C;
-	   case kVK_ANSI_V:              return worldmachine::KeyCode::V;
-	   case kVK_ANSI_B:              return worldmachine::KeyCode::B;
-	   case kVK_ANSI_Q:              return worldmachine::KeyCode::Q;
-	   case kVK_ANSI_W:              return worldmachine::KeyCode::W;
-	   case kVK_ANSI_E:              return worldmachine::KeyCode::E;
-	   case kVK_ANSI_R:              return worldmachine::KeyCode::R;
-	   case kVK_ANSI_Y:              return worldmachine::KeyCode::Y;
-	   case kVK_ANSI_T:              return worldmachine::KeyCode::T;
-	   case kVK_ANSI_1:              return worldmachine::KeyCode::_1;
-	   case kVK_ANSI_2:              return worldmachine::KeyCode::_2;
-	   case kVK_ANSI_3:              return worldmachine::KeyCode::_3;
-	   case kVK_ANSI_4:              return worldmachine::KeyCode::_4;
-	   case kVK_ANSI_6:              return worldmachine::KeyCode::_6;
-	   case kVK_ANSI_5:              return worldmachine::KeyCode::_5;
-	   case kVK_ANSI_Equal:          return worldmachine::KeyCode::equal;
-	   case kVK_ANSI_9:              return worldmachine::KeyCode::_9;
-	   case kVK_ANSI_7:              return worldmachine::KeyCode::_7;
-	   case kVK_ANSI_Minus:          return worldmachine::KeyCode::minus;
-	   case kVK_ANSI_8:              return worldmachine::KeyCode::_8;
-	   case kVK_ANSI_0:              return worldmachine::KeyCode::_0;
-	   case kVK_ANSI_RightBracket:   return worldmachine::KeyCode::rightBracket;
-	   case kVK_ANSI_O:              return worldmachine::KeyCode::O;
-	   case kVK_ANSI_U:              return worldmachine::KeyCode::U;
-	   case kVK_ANSI_LeftBracket:    return worldmachine::KeyCode::leftBracket;
-	   case kVK_ANSI_I:              return worldmachine::KeyCode::I;
-	   case kVK_ANSI_P:              return worldmachine::KeyCode::P;
-	   case kVK_ANSI_L:              return worldmachine::KeyCode::L;
-	   case kVK_ANSI_J:              return worldmachine::KeyCode::J;
-	   case kVK_ANSI_Quote:          return worldmachine::KeyCode::apostrophe;
-	   case kVK_ANSI_K:              return worldmachine::KeyCode::K;
-	   case kVK_ANSI_Semicolon:      return worldmachine::KeyCode::semicolon;
-	   case kVK_ANSI_Backslash:      return worldmachine::KeyCode::backslash;
-	   case kVK_ANSI_Comma:          return worldmachine::KeyCode::comma;
-	   case kVK_ANSI_Slash:          return worldmachine::KeyCode::slash;
-	   case kVK_ANSI_N:              return worldmachine::KeyCode::N;
-	   case kVK_ANSI_M:              return worldmachine::KeyCode::M;
-	   case kVK_ANSI_Period:         return worldmachine::KeyCode::period;
-	   case kVK_ANSI_Grave:          return worldmachine::KeyCode::graveAccent;
-	   case kVK_ANSI_KeypadDecimal:  return worldmachine::KeyCode::keypadDecimal;
-	   case kVK_ANSI_KeypadMultiply: return worldmachine::KeyCode::keypadMultiply;
-	   case kVK_ANSI_KeypadPlus:     return worldmachine::KeyCode::keypadAdd;
-	   case kVK_ANSI_KeypadClear:    return worldmachine::KeyCode::numLock;
-	   case kVK_ANSI_KeypadDivide:   return worldmachine::KeyCode::keypadDivide;
-	   case kVK_ANSI_KeypadEnter:    return worldmachine::KeyCode::keypadEnter;
-	   case kVK_ANSI_KeypadMinus:    return worldmachine::KeyCode::keypadSubtract;
-	   case kVK_ANSI_KeypadEquals:   return worldmachine::KeyCode::keypadEqual;
-	   case kVK_ANSI_Keypad0:        return worldmachine::KeyCode::keypad0;
-	   case kVK_ANSI_Keypad1:        return worldmachine::KeyCode::keypad1;
-	   case kVK_ANSI_Keypad2:        return worldmachine::KeyCode::keypad2;
-	   case kVK_ANSI_Keypad3:        return worldmachine::KeyCode::keypad3;
-	   case kVK_ANSI_Keypad4:        return worldmachine::KeyCode::keypad4;
-	   case kVK_ANSI_Keypad5:        return worldmachine::KeyCode::keypad5;
-	   case kVK_ANSI_Keypad6:        return worldmachine::KeyCode::keypad6;
-	   case kVK_ANSI_Keypad7:        return worldmachine::KeyCode::keypad7;
-	   case kVK_ANSI_Keypad8:        return worldmachine::KeyCode::keypad8;
-	   case kVK_ANSI_Keypad9:        return worldmachine::KeyCode::keypad9;
-	   case kVK_Return:              return worldmachine::KeyCode::enter;
-	   case kVK_Tab:                 return worldmachine::KeyCode::tab;
-	   case kVK_Space:               return worldmachine::KeyCode::space;
-	   case kVK_Delete:              return worldmachine::KeyCode::backspace;
-	   case kVK_Escape:              return worldmachine::KeyCode::escape;
-	   case kVK_CapsLock:            return worldmachine::KeyCode::capsLock;
-	   case kVK_Control:             return worldmachine::KeyCode::leftCtrl;
-	   case kVK_Shift:               return worldmachine::KeyCode::leftShift;
-	   case kVK_Option:              return worldmachine::KeyCode::leftAlt;
-	   case kVK_Command:             return worldmachine::KeyCode::leftSuper;
-	   case kVK_RightControl:        return worldmachine::KeyCode::rightCtrl;
-	   case kVK_RightShift:          return worldmachine::KeyCode::rightShift;
-	   case kVK_RightOption:         return worldmachine::KeyCode::rightAlt;
-	   case kVK_RightCommand:        return worldmachine::KeyCode::rightSuper;
-	   case kVK_F5:                  return worldmachine::KeyCode::F5;
-	   case kVK_F6:                  return worldmachine::KeyCode::F6;
-	   case kVK_F7:                  return worldmachine::KeyCode::F7;
-	   case kVK_F3:                  return worldmachine::KeyCode::F3;
-	   case kVK_F8:                  return worldmachine::KeyCode::F8;
-	   case kVK_F9:                  return worldmachine::KeyCode::F9;
-	   case kVK_F11:                 return worldmachine::KeyCode::F11;
-	   case kVK_F13:                 return worldmachine::KeyCode::printScreen;
-	   case kVK_F10:                 return worldmachine::KeyCode::F10;
-	   case 0x6E:                    return worldmachine::KeyCode::menu;
-	   case kVK_F12:                 return worldmachine::KeyCode::F12;
-	   case kVK_Help:                return worldmachine::KeyCode::insert;
-	   case kVK_Home:                return worldmachine::KeyCode::home;
-	   case kVK_PageUp:              return worldmachine::KeyCode::pageUp;
-	   case kVK_ForwardDelete:       return worldmachine::KeyCode::delete_;
-	   case kVK_F4:                  return worldmachine::KeyCode::F4;
-	   case kVK_End:                 return worldmachine::KeyCode::end;
-	   case kVK_F2:                  return worldmachine::KeyCode::F2;
-	   case kVK_PageDown:            return worldmachine::KeyCode::pageDown;
-	   case kVK_F1:                  return worldmachine::KeyCode::F1;
-	   case kVK_LeftArrow:           return worldmachine::KeyCode::leftArrow;
-	   case kVK_RightArrow:          return worldmachine::KeyCode::rightArrow;
-	   case kVK_DownArrow:           return worldmachine::KeyCode::downArrow;
-	   case kVK_UpArrow:             return worldmachine::KeyCode::upArrow;
-	   default:                      return worldmachine::KeyCode::none;
-   }
-}
-
-static bool isTrackpadScroll(NSEvent* event) {
-	return event.phase != 0 || event.momentumPhase != 0;
-}
-
-static worldmachine::Event toEvent(NSEvent* event) {
-	return {
-		.modifierFlags    = (worldmachine::EventModifierFlags)((unsigned)event.modifierFlags >> 16)
-	};
-}
-
-static worldmachine::KeyEvent toKeyEvent(NSEvent* event) {
-	return {
-		toEvent(event),
-		.keyCode = translateKeyCode(event.keyCode)
-	};
-}
-
-static worldmachine::MouseEvent toMouseEvent(NSEvent* event) {
-	return {
-		toEvent(event),
-		.locationInWindow = { event.locationInWindow.x, event.locationInWindow.y },
-		.locationInView   = {  }
-	};
-}
-static worldmachine::MouseDownEvent toMouseDownEvent(NSEvent* event) {
-	return {
-		toMouseEvent(event),
-		.clickCount = event.clickCount
-	};
-}
-
-static worldmachine::MouseUpEvent toMouseUpEvent(NSEvent* event) {
-	return {
-		toMouseEvent(event)
-	};
-}
-
-static worldmachine::MouseDragEvent toMouseDraggedEvent(NSEvent* event) {
-	return {
-		toMouseEvent(event),
-		.offset = { event.deltaX, event.deltaY }
-	};
-}
-
-static worldmachine::ScrollEvent toScrollEvent(NSEvent* event) {
-	return {
-		toMouseEvent(event),
-		.offset     = { event.scrollingDeltaX, event.scrollingDeltaY },
-		.isTrackpad = isTrackpadScroll(event)
-	};
-}
-
-static worldmachine::MagnificationEvent toMagnificationEvent(NSEvent* event) {
-	return {
-		toMouseEvent(event),
-		.offset = event.magnification
-	};
-}
-
-static worldmachine::MouseMoveEvent toMouseMoveEvent(NSEvent* event) {
-	return {
-		toMouseEvent(event),
-		.offset = { event.deltaX, event.deltaY }
-	};
-}
+#include "Framework/Window.hpp"
+#include "Framework/ResourceUtil.hpp"
+#include "EventMacOS.hpp"
 
 //-----------------------------------------------------------------------------------
 // MARK: WMKeyEventResponder
@@ -366,14 +187,6 @@ extern worldmachine::Window* createMainWindow();
         abort();
     }
 	
-	bool const DESTROY_INI_FILE = false;
-	if (DESTROY_INI_FILE)  {
-	FILE* f = std::fopen("imgui.ini", "w");
-	if (f) { std::fclose(f); }
-	else { throw; }
-	}
-    
-	
 	// Setup Dear ImGui context
     IMGUI_CHECKVERSION();
 	_imguiContext = ImGui::CreateContext();
@@ -483,7 +296,7 @@ static bool WM_G_HasDeallocated = false;
 		}
 		using namespace worldmachine::internal;
 		auto result =  _windowHandleKeyEvent(*weakSelf.appData.window,
-											 toKeyEvent(event),
+											 worldmachine::toKeyEvent(event),
 											 event.type == NSEventTypeKeyDown);
 		return result;
 	};
@@ -592,7 +405,6 @@ static bool WM_G_HasDeallocated = false;
 	_windowHandleMouseEvent(*_appData.window, eventUnion);
 }
 
-// Forward Mouse events to Dear ImGui OSX backend.
 -(void)mouseDown:(NSEvent *)event {
 	using namespace worldmachine;
 	[self handleEvent:EventUnion{
@@ -696,10 +508,8 @@ static bool WM_G_HasDeallocated = false;
 @end
 
 //-----------------------------------------------------------------------------------
-// AppDelegate
+// MARK: AppDelegate
 //-----------------------------------------------------------------------------------
-#include <dlfcn.h>
-#include <stdio.h>
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @property (nonatomic, strong) NSWindow *window;
 @end
@@ -728,7 +538,6 @@ static bool WM_G_HasDeallocated = false;
         self.window.contentViewController = rootViewController;
         [self.window orderFront:self];
         [self.window center];
-//        [self.window becomeKeyWindow];
     }
     return self;
 }
@@ -736,7 +545,7 @@ static bool WM_G_HasDeallocated = false;
 @end
 
 //-----------------------------------------------------------------------------------
-// Application main() function
+// MARK: Application main() function
 //-----------------------------------------------------------------------------------
 
 int main(int argc, const char * argv[])

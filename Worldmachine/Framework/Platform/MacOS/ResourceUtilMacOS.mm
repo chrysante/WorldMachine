@@ -1,4 +1,4 @@
-#include "ResourceUtil.hpp"
+#include "Framework/ResourceUtil.hpp"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
@@ -21,7 +21,10 @@ namespace worldmachine {
 		return {};
 	}
 	
-	MTL::Texture* loadTextureFromFile(MTL::Device* _device, std::filesystem::path filename, std::string_view extension) {
+	MTL::Texture* loadTextureFromFile(MTL::Device* _device,
+									  std::filesystem::path filename,
+									  std::string_view extension)
+	{
 		NSURL *imgURL = [[NSURL alloc] initFileURLWithPath: toNSString(pathForResource(filename, extension).data())];
 		
 		id<MTLDevice> device = (__bridge id<MTLDevice>)_device;
