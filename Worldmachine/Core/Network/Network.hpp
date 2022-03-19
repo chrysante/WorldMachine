@@ -265,14 +265,15 @@ namespace worldmachine {
 		
 		bool dependenciesConnected() const {
 			return [&](auto const&... ec){
-				return ([&](auto const& edgeCollection) {
-					for (auto& edge: edgeCollection) {
+				mtl::vector/*<bool, sizeof...(ec)>*/ result([&] {
+					for (auto& edge : ec) {
 						if (!edge.present && edge.mandatory) {
 							return false;
 						}
 					}
 					return true;
-				}(ec) && ...);
+					}()...);
+				return result.fold(utl::logical_and);
 			}(inputEdges, maskInputEdges);
 		}
 	};

@@ -1,48 +1,38 @@
+include "Utility/premakeCommon.lua"
+
 newoption {
     trigger = "tests",
     description = "Generate Unit Test Projects"
- }
+}
 
 -----------------------------------------------------------------------------------------
 -- Workspace Worldmachine
 -----------------------------------------------------------------------------------------
-workspace "Worldmachine"
-architecture "x86_64"
-configurations {
-    "Debug",
-    "Development",
-    "Release"
-}
-filter "configurations:Debug" 
-    symbols "On"
-filter "configurations:Development or Release"
-    optimize "Speed"
-filter {}
-
+basicWorkspace "Worldmachine"
 filter { "configurations:Debug" }
-    defines { "WM_DEBUGLEVEL=2", "WM_LOGLEVEL=2", "UTL_DEBUG_LEVEL=2" }
+    defines { "WM_DEBUGLEVEL=2", "WM_LOGLEVEL=2" }
 filter { "configurations:Development" }
-    defines { "WM_DEBUGLEVEL=1", "WM_LOGLEVEL=1", "UTL_DEBUG_LEVEL=1" }
+    defines { "WM_DEBUGLEVEL=1", "WM_LOGLEVEL=1" }
 filter { "configurations:Release"  }
-    defines { "WM_DEBUGLEVEL=0", "WM_LOGLEVEL=0", "UTL_DEBUG_LEVEL=0" }
+    defines { "WM_DEBUGLEVEL=0", "WM_LOGLEVEL=0" }
 filter {}
 
 includedirs {
     "worldmachine"
 }
 
-externalincludedirs {
+sysincludedirs {
     "Utility", "vendor"
 }
 
-filter "system:macosx" 
-    cppdialect "C++20"
-    staticruntime "On"
+filter "system:macosx"
     defines { "WM_PLATFORM_MACOS" }
-    externalincludedirs "vendor/Metal-cpp"
+    sysincludedirs "vendor/Metal-cpp"
     xcodebuildsettings { 
         ["MTL_HEADER_SEARCH_PATHS"] = "../../Worldmachine ../../Utility"
     }
+filter "system:windows"
+    defines { "WM_PLATFORM_WINDOWS" }
 filter {}
 
 targetdir("Build/Bin/%{cfg.longname}")
@@ -115,9 +105,6 @@ filter "system:macosx"
     }
 filter {}
 
---postbuildcommands {
-    --"{COPY} %cfg..."
---}
 -----------------------------------------------------------------------------------------
 -- Project WMCore
 -----------------------------------------------------------------------------------------

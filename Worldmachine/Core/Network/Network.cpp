@@ -26,7 +26,7 @@ namespace worldmachine {
 		
 		auto const nodeID = utl::UUID::generate();
 		utl::unique_ref<NodeImplementation> impl = Registry::instance().createNodeImplementation(desc.implementationID, nodeID);
-		desc.position.z = nodes().size();
+		desc.position.z = (float)nodes().size();
 		
 		nodes().push_back(desc.name,
 						  desc.category,
@@ -261,8 +261,8 @@ namespace worldmachine {
 				
 				if (do_intersect(pin, hitPosition)) {
 					return NetworkHitResult::Pin{
-						.index = i,
 						.position = pin.origin,
+						.index = i,
 						.kind = ifKind
 					};
 				}
@@ -368,7 +368,7 @@ namespace worldmachine {
 		try {
 			traverseDownstreamNodes(to.nodeIndex, [](auto){});
 		}
-		catch (NetworkCycleError const& e) {
+		catch ([[maybe_unused]] NetworkCycleError const& e) {
 			this->edges().pop_back();
 			if (removedEdge) {
 				this->edges().push_back(*removedEdge);

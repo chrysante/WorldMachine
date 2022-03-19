@@ -58,9 +58,9 @@ namespace worldmachine {
 	template <typename> class ImageView;
 	
 	template <typename VT>
-//	requires utl::any_of<typename mtl::get_vector_underlying_type<VT>::type, float,  float const>
+//	requires utl::any_of<typename mtl::get_underlying_type<VT>::type, float,  float const>
 	class ImageView {
-		using T = typename mtl::get_vector_underlying_type<VT>::type;
+		using T = typename mtl::get_underlying_type<VT>::type;
 		static constexpr bool _isConst = std::is_const_v<VT>;
 		static constexpr std::size_t N = mtl::get_vector_size<VT>::value;
 		static constexpr auto O = mtl::get_vector_options<VT>::value;

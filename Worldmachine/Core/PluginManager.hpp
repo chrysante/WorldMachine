@@ -10,7 +10,8 @@
 
 namespace worldmachine {
 	
-	struct Plugin {
+	class Plugin {
+	public:
 		Plugin(utl::dynamic_library);
 		
 		utl::UUID id() const { return _id; }

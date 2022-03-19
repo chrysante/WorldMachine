@@ -5,9 +5,9 @@
 #include <utl/hashset.hpp>
 
 #include "Core/Debug.hpp"
-#include "Network.hpp"
-#include "NodeImplementation.hpp"
-#include "NodeDependencyMap.hpp"
+#include "Core/Network/Network.hpp"
+#include "Core/Network/NodeImplementation.hpp"
+#include "Core/Network/NodeDependencyMap.hpp"
 
 
 #if 1
@@ -351,8 +351,8 @@ namespace worldmachine {
 					network->locked([&]{
 						network->nodes().get<Node::BuildProgress>(nodeIndex) += oneProgress;
 					});
-					_info._progress += oneProgress * UINT_MAX / totalTargetBuildCount;
-					network->_buildInfo._progress += oneProgress * UINT_MAX / totalTargetBuildCount;
+					_info._progress += std::uint32_t(oneProgress * UINT_MAX / totalTargetBuildCount);
+					network->_buildInfo._progress += std::uint32_t(oneProgress * UINT_MAX / totalTargetBuildCount);
 					invalidateView();
 				};
 				g.add(std::move(jobWrapper));
