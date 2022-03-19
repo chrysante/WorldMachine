@@ -9,6 +9,7 @@
 #include <utl/dynamic_dispatch.hpp>
 #include <utl/math.hpp>
 #include <random>
+#include <numeric>
 
 using namespace mtl;
 
@@ -88,7 +89,7 @@ namespace worldmachine {
 		{
 			for (std::size_t y = yStart; y < yEnd; ++y) {
 				for (std::size_t x = 0, xSize = img.size().x; x < xSize; ++x) {
-					float2 const uv = levelScale * float2{ x, y } / img.size();
+					float2 const uv = levelScale * float2(x, y) / img.size();
 					
 					float2 const fcoord = interpolation(utl::fract(uv));
 					int2 icoord = utl::floor(uv);
@@ -231,8 +232,8 @@ namespace worldmachine {
 	
 	NodeDescriptor PerlinNoiseNode::staticDescriptor() {
 		return {
-			.name = "Perlin Noise",
 			.category = NodeCategory::generator,
+			.name = "Perlin Noise",
 			.pinDescriptorArray = {
 				.input = {
 					{ "UV Offset", DataType::float2 }

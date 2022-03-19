@@ -7,6 +7,7 @@
 #include <utl/functional.hpp>
 #include <utl/memory.hpp>
 #include <utl/UUID.hpp>
+#include <utl/format.hpp>
 #include <type_traits>
 #include <string>
 
@@ -14,10 +15,14 @@
 #include "Network/NodeImplementation.hpp"
 
 
-#define WM_RegisterNode(Name)                                                       \
-__attribute__((constructor)) void WM_register_##Name() {                            \
-	::worldmachine::Registry::instance().registerNode<Name>(__DATE__ " " __TIME__); \
-}
+
+
+
+#define WM_RegisterNode(Name)                                                                          \
+/*__attribute__((constructor))*/ void WM_register_##Name() {                                           \
+	::worldmachine::Registry::instance().registerNode<Name>(utl::format("{} {}", __DATE__, __TIME__)); \
+}                                                                                                      \
+int UTL_ANONYMOUS_VARIABLE(WM_register_##Name##_init_) = (WM_register_##Name(), 0);
 
 #define WM_RegisterPlugin(Name)                                                                                   \
 WORLDMACHINE_API extern "C" char const* WM_Plugin_GetName() { return Name; }                                      \
@@ -25,7 +30,7 @@ WORLDMACHINE_API extern "C" void const* WM_Plugin_GetRegistry() { return &::worl
 WORLDMACHINE_API extern "C" void WM_Plugin_SetImGuiData(worldmachine_ImGuiRuntimeData data) {                     \
 	::worldmachine::setImGuiRuntimeData(data);                                                                    \
 }                                                                                                                 \
-WORLDMACHINE_API extern "C" char const* WM_Plugin_BuildTime() { return __DATE__ " " __TIME__; }
+WORLDMACHINE_API extern "C" char const* WM_Plugin_BuildTime() { return ""; /*__DATE__ " " __TIME__;*/ }
 
 namespace worldmachine {
 	
@@ -53,7 +58,7 @@ namespace worldmachine {
 		
 	public:
 		template <typename NodeType>
-		void registerNode(char const* buildTime);
+		void registerNode(std::string buildTime);
 		
 		utl::unique_ref<NodeImplementation> createNodeImplementation(ImplementationID, utl::UUID nodeID) const;
 		NodeDescriptor createDescriptorFromID(ImplementationID) const;
@@ -81,7 +86,7 @@ namespace worldmachine {
 	void setImGuiRuntimeData(worldmachine_ImGuiRuntimeData);
 
 	template <typename NodeType>
-	void Registry::registerNode(char const* buildTime) {
+	void Registry::registerNode(std::string buildTime) {
 		
 		NodeDescriptor desc = NodeType::staticDescriptor();
 		desc.name = NodeType::staticName();

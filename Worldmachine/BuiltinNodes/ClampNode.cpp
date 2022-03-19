@@ -56,8 +56,8 @@ namespace worldmachine {
 	
 	NodeDescriptor ClampNode::staticDescriptor() {
 		return {
-			.name = "Clamp",
 			.category = NodeCategory::filter,
+			.name = "Clamp",
 			.pinDescriptorArray = {
 				.input = {
 					{ "Input", DataType::float1, mandatory }

@@ -86,15 +86,15 @@ namespace worldmachine {
 		{
 			for (std::size_t y = yStart; y < yEnd; ++y) {
 				for (std::size_t x = 0, xSize = img.size().x; x < xSize; ++x) {
-					mtl::float2 const uv = params.scale * mtl::float2{ x, y } / img.size();
+					mtl::float2 const uv = params.scale * mtl::float2(x, y) / img.size();
 					mtl::float2 const distUV = offsetUV(uv, x, y);
 					mtl::float2 const fcoord = utl::fract(distUV);
 					mtl::int3 const icoord = mtl::concat(mtl::floor(distUV), 0);
 					
 					float value = std::numeric_limits<float>::max();
+					for (auto [i, j, k] : utl::iota<mtl::int3>(mtl::int3(-1), mtl::int3(2))) {
+						mtl::int3 const index = icoord + mtl::int3(i + 1, j + 1, k + 1);
 					
-					for (auto [i, j, k]: utl::iota<mtl::int3>(-1, 2)) {
-						mtl::uint3 const index = icoord + mtl::uint3{ i + 1, j + 1, k + 1 };
 						if constexpr (hasUVOffset) {
 							if (!mtl::map(index, data->pointData.size(), utl::less).fold(utl::logical_and)) {
 								continue;
@@ -190,20 +190,20 @@ namespace worldmachine {
 							  auto uvOffset,
 							  auto hasUVOffset,
 							  auto squareHeight) {
-				bool constexpr SH = decltype(squareHeight)::value;
-				bool constexpr O  = decltype(hasUVOffset)::value;
-				job.add([=, params = this->params]{
-					algorithm<SH, O>(dest, yStart, yEnd, params, data, distanceFunction, uvOffset);
+								  static constexpr bool SH = decltype(squareHeight)::value;
+								  static constexpr bool O = decltype(hasUVOffset)::value;
+								  job.add([=, params = params] {
+								      algorithm<SH, O>(dest, yStart, yEnd, params, data, distanceFunction, uvOffset);
+								    });
 				});
-			});
 		}
 		return job;
 	}
 	
 	NodeDescriptor VoronoiNode::staticDescriptor() {
 		return {
-			.name = "Voronoi",
 			.category = NodeCategory::generator,
+			.name = "Voronoi",
 			.pinDescriptorArray = {
 				.input = {
 					{ "UV Offset", DataType::float2 }

@@ -34,15 +34,6 @@ namespace worldmachine {
 			ImGui::PopStyleVar();
 		};
 		
-//		if (_backgroundColor) {
-//			ImGui::PushStyleColor(ImGuiCol_WindowBg, *_backgroundColor);
-//		}
-//		utl::scope_guard guardBackgroundColor = [this]{
-//			if (_backgroundColor) {
-//				ImGui::PopStyleColor();
-//			}
-//		};
-		
 		_mainMenuBar();
 		
 		_isFocused = false;

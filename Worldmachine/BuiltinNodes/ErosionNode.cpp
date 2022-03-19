@@ -76,8 +76,8 @@ namespace worldmachine {
 	
 	NodeDescriptor ErosionNode::staticDescriptor() {
 		return {
-			.name = "Erosion",
 			.category = NodeCategory::natural,
+			.name = "Erosion",
 			.pinDescriptorArray = {
 				.input = {
 					{ "Input", DataType::float1, mandatory },
@@ -344,7 +344,7 @@ namespace worldmachine {
 		
 		int radius = erosionRadius;
 		
-		brushWeights.resize({ radius * 2 + 1, radius * 2 + 1 });
+		brushWeights.resize(mtl::usize2(radius * 2 + 1, radius * 2 + 1));
 		float sum = 0;
 		for (auto index: utl::iota<int2>(-radius, radius+1)) {
 			float weigth = std::max(0.0f, (radius + 1 - mtl::fast_norm((float2)index)) / radius);

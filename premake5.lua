@@ -170,9 +170,22 @@ includedirs {
 
 files { 
     "Worldmachine/Framework/**.hpp",
-    "Worldmachine/Framework/**.cpp",
-    "Worldmachine/Framework/**.mm",
+    "Worldmachine/Framework/**.cpp"
 }
+
+removefiles "Worldmachine/Framework/Platform/**"
+
+filter "system:macosx"
+    files "Worldmachine/Framework/Platform/MacOS/**"
+filter "system:windows"
+    files "Worldmachine/Framework/Platform/Windows/**"
+filter {}
+
+filter "system:macosx"
+    files {
+        "Worldmachine/Framework/**.mm" 
+    }
+filter {}
 
 -----------------------------------------------------------------------------------------
 -- Project WMBuiltinNodes

@@ -133,8 +133,8 @@ namespace worldmachine {
 	
 	NodeDescriptor CombinerNode::staticDescriptor() {
 		return {
-			.name = "Combiner",
 			.category = NodeCategory::filter,
+			.name = "Combiner",
 			.pinDescriptorArray = {
 				.input = {
 					{ "A", DataType::float1, mandatory },

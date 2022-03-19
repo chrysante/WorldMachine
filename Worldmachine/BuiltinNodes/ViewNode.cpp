@@ -14,8 +14,8 @@ namespace worldmachine {
 	
 	NodeDescriptor ViewNode::staticDescriptor() {
 		return {
-			.name = "View",
 			.category = NodeCategory::output,
+			.name = "View",
 			.pinDescriptorArray = {
 				.input = {
 					{ "Height", DataType::float1, mandatory },

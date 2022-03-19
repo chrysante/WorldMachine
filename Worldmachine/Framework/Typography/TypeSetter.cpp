@@ -1,7 +1,7 @@
 #include "TypeSetter.hpp"
 
 #include "Core/Debug.hpp"
-#include "ResourceUtil.hpp"
+#include "Framework/ResourceUtil.hpp"
 
 #include <sstream>
 #include <fstream>

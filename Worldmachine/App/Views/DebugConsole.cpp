@@ -71,12 +71,12 @@ namespace worldmachine {
 			for (auto& logMessage: logs) {
 				ImGui::TableNextRow();
 				auto const& a = getWindow()->appearance();
-				auto textColor = [&](utl::log_level l) { return a.logTextColors[utl::log2((uint)l)]; };
+				auto textColor = [&](utl::log_level l) { return a.logTextColors[utl::log2((unsigned)l)]; };
 				columnItem(0, textColor(utl::log_level::trace), logMessage.logger_name);
 				columnItem(1, textColor(utl::log_level::trace), utl::time_in_HH_MM_SS_MMM(logMessage.time));
 				columnItem(2, textColor(utl::log_level::trace),
 						   logMessage.thread_id == std::this_thread::get_id() ?
-						   "main" : utl::format("{}", utl::bit_cast<std::size_t>(logMessage.thread_id)));
+						   "main" : utl::format("{}", logMessage.thread_id));
 				columnItem(3, textColor(utl::log_level::trace), logMessage.source_info.file);
 				columnItem(4, textColor(utl::log_level::trace), "{}: {}", utl::qualified_function_name(logMessage.source_info.function),
 						   logMessage.source_info.line);

@@ -34,8 +34,8 @@ namespace worldmachine {
 	
 	NodeDescriptor AppendNode::staticDescriptor() {
 		return {
-			.name = "Append",
 			.category = NodeCategory::filter,
+			.name = "Append",
 			.pinDescriptorArray = {
 				.input = {
 					{ "Red Channel", DataType::float1, mandatory },
