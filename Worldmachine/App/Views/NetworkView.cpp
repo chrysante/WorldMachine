@@ -96,9 +96,9 @@ namespace worldmachine {
 	void NetworkView::onFileOpen() {
 		double2 const centerOfMass = [&]{
 			double2 result = 0;
-			network->nodes().for_each<Node::Position>([&](auto& pos) {
-				result += pos.xy;
-			});
+			for (auto const& position: network->nodes.view<Node::members::position const>()) {
+				result += position.xy;
+			}
 			return result / network->nodeCount();
 		}();
 		portalParameters().position = centerOfMass - this->size() / 2;
@@ -160,7 +160,7 @@ namespace worldmachine {
 	}
 	
 	void NetworkView::nodeContextMenu(std::size_t nodeIndex) {
-		auto* const nodeImpl = network->nodes().get<Node::Implementation>(nodeIndex).get();
+		auto* const nodeImpl = network->nodes[nodeIndex].implementation.get();
 		if (nodeImpl == NodeView::getActiveDisplayNodeImplementationPointer()) {
 			if (ImGui::MenuItem("Unlock Display")) {
 				setActiveDisplayNode(std::nullopt);
@@ -337,7 +337,7 @@ namespace worldmachine {
 	void NetworkView::handleNodeRightClick(MouseDownEvent event, std::size_t nodeIndex) {
 		if /** Command key is not pressed */ (!(event.modifierFlags & EventModifierFlags::super)) {
 			if (network->selectedIndices().size() < 2 && !network->isSelected(nodeIndex)) {
-				WM_Log("Selecting node {}", network->nodes().get<Node::Name>(nodeIndex));
+				WM_Log("Selecting node {}", network->nodes[nodeIndex].name);
 				network->selectNode(nodeIndex);
 			}
 		}
@@ -552,7 +552,7 @@ namespace worldmachine {
 	{
 		switch (hitResult.type) {
 			case NetworkHitResult::Type::pin: {
-				auto const& descArray = network->nodes().get<NodePinDescriptorArray>(hitResult.node.index);
+				auto const& descArray = network->nodes[hitResult.node.index].pinDescriptorArray;
 				auto const& name = descArray.get(hitResult.pin.kind)[hitResult.pin.index].name();
 				std::string text = [&]{
 					if (draggingFrom.has_value()) {

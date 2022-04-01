@@ -96,20 +96,20 @@ namespace worldmachine {
 	}
 	
 	void NetworkRenderer::createNodeBuffers(std::size_t nodeCount) {
-		nodePositionBuffer =  device->newBuffer((uint32_t)nodeCount * sizeof(Node::Position),       ResourceStorageModeManaged);
-		nodeSizeBuffer     =  device->newBuffer((uint32_t)nodeCount * sizeof(Node::Size),           ResourceStorageModeManaged);
-		nodeCategoryBuffer =  device->newBuffer((uint32_t)nodeCount * sizeof(NodeCategory),         ResourceStorageModeManaged);
-		nodeFlagsBuffer    =  device->newBuffer((uint32_t)nodeCount * sizeof(NodeFlags),            ResourceStorageModeManaged);
+		nodePositionBuffer =  device->newBuffer((uint32_t)nodeCount * sizeof(Node{}.position),      ResourceStorageModeManaged);
+		nodeSizeBuffer     =  device->newBuffer((uint32_t)nodeCount * sizeof(Node{}.size),          ResourceStorageModeManaged);
+		nodeCategoryBuffer =  device->newBuffer((uint32_t)nodeCount * sizeof(Node{}.category),      ResourceStorageModeManaged);
+		nodeFlagsBuffer    =  device->newBuffer((uint32_t)nodeCount * sizeof(Node{}.flags),         ResourceStorageModeManaged);
 		nodePinCountBuffer
-						   =  device->newBuffer((uint32_t)nodeCount * sizeof(PinCount<>),     ResourceStorageModeManaged);
+						   =  device->newBuffer((uint32_t)nodeCount * sizeof(Node{}.pinCount),      ResourceStorageModeManaged);
 		nodeBuildProgressBuffer
-		                   =  device->newBuffer((uint32_t)nodeCount * sizeof(Node::BuildProgress),  ResourceStorageModeManaged);
-		nodeNameBuffer     =  device->newBuffer((uint32_t)nodeCount * sizeof(NodeNameRenderData), ResourceStorageModeManaged);
+						   =  device->newBuffer((uint32_t)nodeCount * sizeof(Node{}.buildProgress), ResourceStorageModeManaged);
+		nodeNameBuffer     =  device->newBuffer((uint32_t)nodeCount * sizeof(NodeNameRenderData),   ResourceStorageModeManaged);
 		
 	}
 	
 	void NetworkRenderer::createEdgeProxyBuffer(std::size_t edgeCount) {
-		edgeProxyBuffer = device->newBuffer((uint32_t)edgeCount * sizeof(Edge::Proxy), ResourceStorageModeManaged);
+		edgeProxyBuffer = device->newBuffer((uint32_t)edgeCount * sizeof(Edge{}.proxy), ResourceStorageModeManaged);
 	}
 	
 	void NetworkRenderer::draw(View& view,
@@ -150,9 +150,9 @@ namespace worldmachine {
 		
 		updateNodeBuffers(network);
 		
-//		if (!network.nodes().empty()) {
+//		if (!network.nodes.empty()) {
 //			auto copyNodeBuffer = [&]<typename T>(Buffer* buffer) {
-//				worldmachine::fillBuffer(buffer, network.nodes().data<T>(), network.nodeCount() * sizeof(T));
+//				worldmachine::fillBuffer(buffer, network.nodes.data<T>(), network.nodeCount() * sizeof(T));
 //			};
 //			copyNodeBuffer.operator()<Node::Position>(nodePositionBuffer.get());
 //			copyNodeBuffer.operator()<Node::Size>(nodeSizeBuffer.get());
@@ -167,10 +167,10 @@ namespace worldmachine {
 			createEdgeProxyBuffer(network.edgeCount());
 			edgeProxyBufferSize = network.edgeCount();
 		}
-		if (!network.edges().empty()) {
+		if (!network.edges.empty()) {
 			worldmachine::fillBuffer(edgeProxyBuffer.get(),
-									 network.edges().data<Edge::Proxy>(),
-									 network.edgeCount() * sizeof(Edge::Proxy));
+									 network.edges.data().proxy,
+									 network.edgeCount() * sizeof(Edge{}.proxy));
 		}
 		drawBackground(renderCommandEncoder);
 
@@ -367,11 +367,6 @@ namespace worldmachine {
 		commandEncoder->drawPrimitives(PrimitiveTypeTriangle, 0ul, 6);
 	}
 	
-	template <typename Field>
-	static void copySingleNodeBuffer(Network const& network, Buffer* buffer) {
-		fillBuffer(buffer, network.nodes().data<Field>(), network.nodeCount() * sizeof(Field));
-	}
-	
 	void NetworkRenderer::updateNodeBuffers(Network const& network) {
 		// fill node Buffers
 		if (nodeBufferSize < network.nodeCount()) {
@@ -379,16 +374,17 @@ namespace worldmachine {
 			nodeBufferSize = network.nodeCount();
 		}
 		
-		if (network.nodes().empty()) {
+		if (network.nodes.empty()) {
 			return;
 		}
 		
-		copySingleNodeBuffer<Node::Position>(network, nodePositionBuffer.get());
-		copySingleNodeBuffer<Node::Size>(network, nodeSizeBuffer.get());
-		copySingleNodeBuffer<NodeCategory>(network, nodeCategoryBuffer.get());
-		copySingleNodeBuffer<Node::Flags>(network, nodeFlagsBuffer.get());
-		copySingleNodeBuffer<PinCount<>>(network, nodePinCountBuffer.get());
-		copySingleNodeBuffer<Node::BuildProgress>(network, nodeBuildProgressBuffer.get());
+		
+		fillBuffer(nodePositionBuffer.get(),      network.nodes.data().position,      network.nodeCount() * sizeof(Node{}.position));
+		fillBuffer(nodeSizeBuffer.get(),          network.nodes.data().size,          network.nodeCount() * sizeof(Node{}.size));
+		fillBuffer(nodeCategoryBuffer.get(),      network.nodes.data().category,      network.nodeCount() * sizeof(Node{}.category));
+		fillBuffer(nodeFlagsBuffer.get(),         network.nodes.data().flags,         network.nodeCount() * sizeof(Node{}.flags));
+		fillBuffer(nodePinCountBuffer.get(),      network.nodes.data().pinCount,      network.nodeCount() * sizeof(Node{}.pinCount));
+		fillBuffer(nodeBuildProgressBuffer.get(), network.nodes.data().buildProgress, network.nodeCount() * sizeof(Node{}.buildProgress));
 		
 		createNodeNameRenderData(network);
 		
@@ -413,7 +409,7 @@ namespace worldmachine {
 		nodeNameRenderData.resize(network.nodeCount());
 		
 		for (std::size_t i = 0; i < network.nodeCount(); ++i) {
-			std::string const nameShortened = shortenName(network.nodes().get<Node::Name>(i));
+			std::string const nameShortened = shortenName(network.nodes[i].name);
 			
 			auto const letterData = typeSetter->typeset(nameShortened, {
 				FontWeight::regular, FontStyle::roman

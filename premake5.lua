@@ -1,10 +1,5 @@
 include "Utility/premakeCommon.lua"
 
-newoption {
-    trigger = "tests",
-    description = "Generate Unit Test Projects"
-}
-
 -----------------------------------------------------------------------------------------
 -- Workspace Worldmachine
 -----------------------------------------------------------------------------------------

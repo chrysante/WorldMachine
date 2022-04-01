@@ -10,7 +10,8 @@
 #include "NodeImplementation.hpp"
 #include "NodeSerializer.hpp"
 
-namespace utl {
+namespace mtl {
+
 	template <typename T, std::size_t Size, mtl::vector_options O>
 	YAML::Emitter& operator<<(YAML::Emitter& out, mtl::vector<T, Size, O> const& v) {
 		out << YAML::Flow << YAML::BeginSeq;
@@ -19,55 +20,54 @@ namespace utl {
 		}
 		return out << YAML::EndSeq;
 	}
+
 }
 
-namespace YAML {
-	template <typename T, std::size_t Size, mtl::vector_options O>
-	struct convert<mtl::vector<T, Size, O>> {
-		static Node encode(mtl::vector<T, Size, O> const& v) {
-			Node node;
-			for (auto i: v) {
-				node.push_back(i);
-			}
-			return node;
+template <typename T, std::size_t Size, mtl::vector_options O>
+struct YAML::convert<mtl::vector<T, Size, O>> {
+	static Node encode(mtl::vector<T, Size, O> const& v) {
+		Node node;
+		for (auto i: v) {
+			node.push_back(i);
 		}
+		return node;
+	}
+	
+	static bool decode(Node const& node, mtl::vector<T, Size, O>& v) {
+		if (!node.IsSequence() || node.size() != Size) { return false; }
 		
-		static bool decode(Node const& node, mtl::vector<T, Size, O>& v) {
-			if (!node.IsSequence() || node.size() != Size) { return false; }
-			
-			UTL_WITH_INDEX_SEQUENCE((I, Size), {
-				v = { node[I].as<T>()... };
-			});
-			return true;
-		}
-	};
-}
+		UTL_WITH_INDEX_SEQUENCE((I, Size), {
+			v = { node[I].as<T>()... };
+		});
+		return true;
+	}
+};
 
 namespace worldmachine {
 	
 	static void serializeNode(YAML::Emitter& out,
-							  utl::structure_of_arrays<NodeSOAType>::const_reference node) {
+							  Node::const_reference node) {
 		out << YAML::BeginMap;
 		utl_defer { out << YAML::EndMap; };
 		
-		out << YAML::Key << "ImplementationID" << YAML::Value << node.get<Node::Implementation>()->implementationID().value();
-		out << YAML::Key << "Name" << YAML::Value << node.get<Node::Name>();
-		out << YAML::Key << "Position" << YAML::Value << node.get<Node::Position>();
-		auto const* impl = node.get<Node::Implementation>().get();
+		out << YAML::Key << "ImplementationID" << YAML::Value << node.implementation->implementationID().value();
+		out << YAML::Key << "Name" << YAML::Value << node.name;
+		out << YAML::Key << "Position" << YAML::Value << node.position;
+		auto const* impl = node.implementation.get();
 		impl->serializer().serialize(out);
 	}
 	
 	static void serializeEdge(YAML::Emitter& out,
-							  utl::structure_of_arrays<EdgeType>::const_reference edge) {
+							  Edge::const_reference edge) {
 		out << YAML::BeginMap;
 		utl_defer { out << YAML::EndMap; };
 		
-		out << YAML::Key << "BeginNodeIndex"      << YAML::Value << edge.get<Edge::BeginNodeIndex>();
-		out << YAML::Key << "EndNodeIndex"        << YAML::Value << edge.get<Edge::EndNodeIndex>();
-		out << YAML::Key << "BeginPinIndex" << YAML::Value << edge.get<Edge::BeginPinIndex>();
-		out << YAML::Key << "EndPinIndex"   << YAML::Value << edge.get<Edge::EndPinIndex>();
-		out << YAML::Key << "BeginPinKind"  << YAML::Value << utl::to_underlying(edge.get<Edge::BeginPinKind>().get());
-		out << YAML::Key << "EndPinKind"    << YAML::Value << utl::to_underlying(edge.get<Edge::EndPinKind>().get());
+		out << YAML::Key << "BeginNodeIndex" << YAML::Value << edge.beginNodeIndex;
+		out << YAML::Key << "EndNodeIndex"   << YAML::Value << edge.endNodeIndex;
+		out << YAML::Key << "BeginPinIndex"  << YAML::Value << edge.beginPinIndex;
+		out << YAML::Key << "EndPinIndex"    << YAML::Value << edge.endPinIndex;
+		out << YAML::Key << "BeginPinKind"   << YAML::Value << utl::to_underlying(edge.beginPinKind);
+		out << YAML::Key << "EndPinKind"     << YAML::Value << utl::to_underlying(edge.endPinKind);
 	}
 	
 	std::string serializeNetwork(Network const& network) {
@@ -78,20 +78,18 @@ namespace worldmachine {
 			utl_defer { out << YAML::EndMap; };
 			
 			out << YAML::Key << "WorldMachine File" << YAML::Value << "ignore";
-			{
-				out << YAML::Key << "Nodes" << YAML::BeginSeq;
-				utl_defer { out << YAML::EndSeq; };
-				network.nodes().for_each([&](auto node){
-					serializeNode(out, node);
-				});
+			
+			out << YAML::Key << "Nodes" << YAML::BeginSeq;
+			for (auto node: network.nodes) {
+				serializeNode(out, node);
 			}
-			{
-				out << YAML::Key << "Edges" << YAML::BeginSeq;
-				utl_defer { out << YAML::EndSeq; };
-				network.edges().for_each([&](auto edge){
-					serializeEdge(out, edge);
-				});
+			out << YAML::EndSeq;
+			
+			out << YAML::Key << "Edges" << YAML::BeginSeq;
+			for (auto edge: network.edges) {
+				serializeEdge(out, edge);
 			}
+			out << YAML::EndSeq;
 		}
 		return out.c_str();
 	}
@@ -127,7 +125,7 @@ namespace worldmachine {
 		
 		// nodes
 		if (auto nodes = data["Nodes"]) {
-			network.nodes().reserve(nodes.size());
+			network.nodes.reserve(nodes.size());
 			for (auto yamlNode: nodes) {
 				ImplementationID const implementationID{ getValue(yamlNode, "ImplementationID").as<ImplementationID::ValueType>() };
 				std::string const name     = getValue(yamlNode, "Name").as<std::string>();
@@ -140,7 +138,7 @@ namespace worldmachine {
 					desc.name = name;
 					desc.position = position;
 					std::size_t const nodeIndex = network.addNode(desc);
-					network.nodes().get<Node::Implementation>(nodeIndex)->serializer().deserialize(yamlNode);
+					network.nodes[nodeIndex].implementation->serializer().deserialize(yamlNode);
 				}
 				catch (std::exception const& e) {
 					WM_Log(error, "Failed to create Node \"{}\": {}", name, e.what());
@@ -151,7 +149,7 @@ namespace worldmachine {
 		
 		// edges
 		if (auto edges = data["Edges"]) {
-			network.edges().reserve(edges.size());
+			network.edges.reserve(edges.size());
 			for (auto edge: edges) {
 				auto const BeginNodeIndex      = getValue(edge, "BeginNodeIndex").as<std::size_t>();
 				auto const EndNodeIndex        = getValue(edge, "EndNodeIndex").as<std::size_t>();

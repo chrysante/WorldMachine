@@ -26,21 +26,36 @@ namespace worldmachine {
 		
 		auto const nodeID = utl::UUID::generate();
 		utl::unique_ref<NodeImplementation> impl = Registry::instance().createNodeImplementation(desc.implementationID, nodeID);
-		desc.position.z = (float)nodes().size();
+		desc.position.z = (float)nodes.size();
 		
-		nodes().push_back(desc.name,
-						  desc.category,
-						  desc.position,
-						  nodeSize(m_nodeParams, pinCount),
-						  0.0f /* buildProgress */,
-						  pinCount,
-						  NodeFlags::none,
-						  nodeID,
-						  std::move(impl),
-						  desc.pinDescriptorArray);
+//		nodes.push_back(desc.name,
+//						  desc.category,
+//						  desc.position,
+//						  nodeSize(m_nodeParams, pinCount),
+//						  0.0f /* buildProgress */,
+//						  pinCount,
+//						  NodeFlags::none,
+//						  nodeID,
+//						  std::move(impl),
+//						  desc.pinDescriptorArray);
+		
+		Node elem = {
+			.name               = desc.name,
+			.category           = desc.category,
+			.position           = desc.position,
+			.size               = nodeSize(m_nodeParams, pinCount),
+			.buildProgress      = 0.0f,
+			.pinCount           = pinCount,
+			.flags              = NodeFlags::none,
+			.id                 = nodeID,
+			.implementation     = std::move(impl),
+			.pinDescriptorArray = desc.pinDescriptorArray
+		};
+		
+		nodes.push_back(elem);
 		
 
-		std::size_t const nodeIndex = nodes().size() - 1;
+		std::size_t const nodeIndex = nodes.size() - 1;
 		return nodeIndex;
 	}
 	
@@ -101,20 +116,19 @@ namespace worldmachine {
 	
 	/// MARK: - NetworkBase
 	long NetworkBase::indexFromID(utl::UUID id) const {
-		auto const index = nodes().find_if<Node::ID>([&, i = std::size_t{ 0 }](auto targetID) mutable -> std::optional<std::size_t> {
+		for (std::size_t i = 0;
+			 auto& targetID: nodes.view<Node::members::id>())
+		{
 			if (targetID == id) {
 				return i;
 			}
-			else {
-				++i;
-				return std::nullopt;
-			}
-		});
-		return index ? *index : -1;
+			++i;
+		}
+		return -1;
 	}
 	
 	utl::UUID NetworkBase::IDFromIndex(std::size_t nodeIndex) const {
-		return nodes().get<Node::ID>(nodeIndex);
+		return nodes[nodeIndex].id;
 	}
 	
 	utl::small_vector<std::size_t> NetworkBase::indicesFromIDs(std::span<utl::UUID const> ids) const {
@@ -139,8 +153,8 @@ namespace worldmachine {
 	
 	/// MARK: - Network
 	Network::Network() {
-		auto id = globalMessenger().register_listener([this](PluginsWillReload){
-			nodes().for_each<Node::Implementation>([&](Node::Implementation& impl) {
+		auto id = globalMessenger().register_listener([this](PluginsWillReload) {
+			for (auto& impl: nodes.view<Node::members::implementation>()) {
 				YAML::Emitter out;
 				out << YAML::BeginMap;
 				impl->serializer().serialize(out);
@@ -151,20 +165,19 @@ namespace worldmachine {
 					out.c_str()
 				});
 				impl.reset();
-			});
+			}
 		});
 		_listenerIDs.insert(std::move(id));
 		
 		id = globalMessenger().register_listener([this](PluginsDidReload){
 			std::size_t index = 0;
-			nodes().for_each<Node::Implementation, Node::ID>([&](Node::Implementation& impl,
-																 auto nodeID) {
+			for (auto [impl, nodeID]: nodes.view<Node::members::implementation, Node::members::id>()) {
 				auto [implementationID, text] = _storedImplementationState[index++];
 				impl = Registry::instance().createNodeImplementation(implementationID, nodeID);
 				
 				YAML::Node yamlNode = YAML::Load(text);
 				impl->serializer().deserialize(yamlNode);
-			});
+			}
 			invalidateAllNodes();
 		});
 		_listenerIDs.insert(std::move(id));
@@ -176,16 +189,12 @@ namespace worldmachine {
 	
 	/// MARK: - Modification and interaction
 	NetworkHitResult Network::hitTest(mtl::float2 hitPosition) const {
+		
 		// test nodes
-		if (auto result = this->nodes().find_if<utl::backward,
-												Node::Position,
-												Node::Size,
-												NodeCategory,
-												PinCount<>>([&](auto nodeIndex,
-																auto const& nodePosition,
-																auto const& nodeSize,
-																auto const& nodeCategory,
-																auto const& nodePinCount) -> std::optional<NetworkHitResult> {
+		for (std::size_t nodeIndex = 0;
+			 auto [nodePosition, nodeSize, nodeCategory, nodePinCount]:
+			 utl::reverse(nodes.view<Node::members::position, Node::members::size, Node::members::category, Node::members::pinCount>()))
+		{
 			auto const nodeBox = this->nodeBounds(nodePosition.xy, nodeSize);
 
 			// test collision with pins
@@ -214,16 +223,15 @@ namespace worldmachine {
 				};
 				return result;
 			}
-
-			return std::nullopt;
-		})) {
-			return *result;
+			
+			++nodeIndex;
 		}
 		
 
 		// test edges
-		if (auto result = this->edges().find_if<Edge::Proxy>([&](auto edgeIndex,
-																 Edge::Proxy const& proxy) -> std::optional<NetworkHitResult> {
+		for (std::size_t edgeIndex = 0;
+			 auto& proxy: edges.view<Edge::members::proxy>())
+		{
 			mtl::line_segment_2D<> const edge = { proxy.begin, proxy.end };
 			if (mtl::distance(edge, hitPosition) <= 2 * this->edgeParams().width) {
 				NetworkHitResult result;
@@ -234,13 +242,10 @@ namespace worldmachine {
 				return result;
 			}
 			
-			return std::nullopt;
-		})) {
-			return *result;
+			++edgeIndex;
 		}
-
 		
-		// hit background
+		// when we get to here we've hit the background
 		return NetworkHitResult{
 			.type = NetworkHitResult::Type::background
 		};
@@ -294,10 +299,10 @@ namespace worldmachine {
 			addEdge(a, b);
 		}
 		catch (std::exception const& e) {
-			if (a.nodeIndex < nodes().size() && b.nodeIndex < nodes().size()) {
+			if (a.nodeIndex < nodes.size() && b.nodeIndex < nodes.size()) {
 				WM_Log(error, "Failed to add edge from {} to {}: {}",
-					   nodes().get<Node::Name>(a.nodeIndex),
-					   nodes().get<Node::Name>(b.nodeIndex),
+					   nodes[a.nodeIndex].name,
+					   nodes[b.nodeIndex].name,
 					   e.what());
 			}
 			else {
@@ -317,7 +322,7 @@ namespace worldmachine {
 			throw std::runtime_error("Source and target are the same node");
 		}
 		
-		if (a.nodeIndex >= nodes().size() || b.nodeIndex >= nodes().size()) {
+		if (a.nodeIndex >= nodes.size() || b.nodeIndex >= nodes.size()) {
 			throw std::runtime_error("Node Index does not exist");
 		}
 		
@@ -337,8 +342,8 @@ namespace worldmachine {
 			}
 		}();
 		
-		auto const dataTypeX = nodes().get<NodePinDescriptorArray>(x.nodeIndex).get(x.pinKind).at(x.pinIndex).dataType();
-		auto const dataTypeY = nodes().get<NodePinDescriptorArray>(y.nodeIndex).get(y.pinKind).at(y.pinIndex).dataType();
+		auto const dataTypeX = nodes[x.nodeIndex].pinDescriptorArray.get(x.pinKind).at(x.pinIndex).dataType();
+		auto const dataTypeY = nodes[y.nodeIndex].pinDescriptorArray.get(y.pinKind).at(y.pinIndex).dataType();
 		
 		
 		WM_Assert(std::popcount(utl::to_underlying(dataTypeX)) < 2, "More than one data type flag is set in output");
@@ -353,25 +358,29 @@ namespace worldmachine {
 	// private
 	void Network::addEdgeImpl(PinIndex const& from, PinIndex const& to,
 							  std::optional<std::size_t> edgeToRemove) {
-		std::optional<EdgeType> removedEdge;
+		std::optional<Edge> removedEdge;
 		if (edgeToRemove) {
-			removedEdge = edges()[*edgeToRemove];
-			edges().erase(*edgeToRemove);
+			removedEdge = edges[*edgeToRemove];
+			edges.erase(*edgeToRemove);
 		}
-		this->edges().push_back(from.nodeIndex,
-								to.nodeIndex,
-								from.pinIndex,
-								to.pinIndex,
-								from.pinKind,
-								to.pinKind,
-								makeEdgeProxy(from, to));
+		
+		edges.push_back({
+			.beginNodeIndex = from.nodeIndex,
+			.endNodeIndex   = to.nodeIndex,
+			.beginPinIndex  = from.pinIndex,
+			.endPinIndex    = to.pinIndex,
+			.beginPinKind   = from.pinKind,
+			.endPinKind     = to.pinKind,
+			.proxy          = makeEdgeProxy(from, to)
+		});
+		
 		try {
 			traverseDownstreamNodes(to.nodeIndex, [](auto){});
 		}
 		catch ([[maybe_unused]] NetworkCycleError const& e) {
-			this->edges().pop_back();
+			this->edges.pop_back();
 			if (removedEdge) {
-				this->edges().push_back(*removedEdge);
+				this->edges.push_back(*removedEdge);
 			}
 			throw NetworkCycleError("Edge would introduce a cycle.");
 		}
@@ -380,22 +389,22 @@ namespace worldmachine {
 	
 	EdgeProxy Network::makeEdgeProxy(PinIndex const& from, PinIndex const& to) {
 		auto const getPinPosition = [&, this](PinIndex const& desc) {
-			auto const nodePosition = this->nodes().get<Node::Position>(desc.nodeIndex);
-			auto const nodeSize     = this->nodes().get<Node::Size>(desc.nodeIndex);
+			auto const nodePosition = nodes[desc.nodeIndex].position;
+			auto const nodeSize     = nodes[desc.nodeIndex].size;
 			
 			return this->pinPosition(nodePosition.xy,
 									 nodeSize,
 									 desc.pinKind,
 									 desc.pinIndex,
-									 this->nodeParams());
+									 nodeParams());
 		};
 		return { getPinPosition(from), getPinPosition(to) };
 	}
 	
 	void Network::removeEdge(std::size_t edgeIndex) {
 		WM_BoundsCheck(edgeIndex, 0, edgeCount());
-		std::size_t const nodeIndex = edges().get<Edge::EndNodeIndex>(edgeIndex);
-		edges().erase(edgeIndex);
+		std::size_t const nodeIndex = edges[edgeIndex].endNodeIndex;
+		edges.erase(edgeIndex);
 		invalidateNodesDownstream(nodeIndex);
 	}
 	
@@ -414,21 +423,25 @@ namespace worldmachine {
 	
 	void Network::removeNode(std::size_t nodeIndex) {
 		WM_BoundsCheck(nodeIndex, 0, nodeCount());
-		nodes().erase(nodeIndex);
+		nodes.erase(nodeIndex);
 		utl::small_vector<std::uint32_t, 24> edgesToRemove;
-		edges().for_each<Edge::BeginNodeIndex, Edge::EndNodeIndex>([&](std::uint32_t edgeIndex, auto& a, auto& b) {
+		for (std::size_t edgeIndex = 0;
+			 auto [a, b]: edges.view<Edge::members::beginNodeIndex, Edge::members::endNodeIndex>())
+		{
 			if (a == nodeIndex || b == nodeIndex) {
-				edgesToRemove.push_back(edgeIndex);
+				edgesToRemove.push_back((std::uint32_t)edgeIndex);
 			}
 			if (a > nodeIndex)
 				--a;
 			if (b > nodeIndex)
 				--b;
-		});
+			++edgeIndex;
+		}
+		
 		// hacky way to adjust the edge indices after each removal
 		std::sort(edgesToRemove.begin(), edgesToRemove.end());
 		for (std::size_t i = 0; auto edgeIndex: edgesToRemove) {
-			edges().erase(edgeIndex - i);
+			edges.erase(edgeIndex - i);
 			++i;
 		}
 	}
@@ -477,14 +490,15 @@ namespace worldmachine {
 	}
 	
 	void Network::setRectangleSelection(mtl::rectangle<float> rect, SelectOperation op) {
-		this->Selection::clearCandidates();
+		Selection::clearCandidates();
 		
-		this->nodes().for_each<Node::Position, Node::Size>([&](auto index, auto position, auto size) {
-			this->clearNodeFlag(index, NodeFlags::selected);
-			if (do_intersect(this->nodeBounds(position.xy, size), rect)) {
-				this->Selection::addCandidate(index);
+		for (std::size_t index = 0; auto [position, size]: nodes.view<Node::members::position, Node::members::size>()) {
+			clearNodeFlag(index, NodeFlags::selected);
+			if (do_intersect(nodeBounds(position.xy, size), rect)) {
+				Selection::addCandidate(index);
 			}
-		});
+			++index;
+		}
 		
 		for (auto i: this->Selection::indices) {
 			this->setNodeFlag(i, NodeFlags::selected);
@@ -538,53 +552,50 @@ namespace worldmachine {
 	void Network::moveToTop(std::size_t oldIndex) {
 		WM_BoundsCheck(oldIndex, 0, this->nodeCount());
 		
-		float const zPosition = nodes().get<Node::Position>(oldIndex).z;
+		float const zPosition = nodes[oldIndex].position.z;
 		
-		nodes().for_each<Node::Position>([&](float3& pos) {
+		for (auto& pos: nodes.view<Node::members::position>()) {
 			if (pos.z < zPosition) {
 				pos.z += 1;
 			}
-		});
+		}
 		
-		nodes().get<Node::Position>(oldIndex).z = 0;
+		nodes[oldIndex].position.z = 0;
 	}
 	
 	void Network::moveSelected(mtl::float2 offset) {
-		utl::for_each(this->Selection::indices, [&](auto index) {
-			this->nodes().get<Node::Position>(index).xy += offset;
-		});
+		for (auto index: Selection::indices) {
+			nodes[index].position.xy += offset;
+		}
 		
 		// move edges
-		utl::for_each(this->Selection::indices, [&](auto selectedNodeIndex) {
-			this->edges().for_each<Edge::BeginNodeIndex, Edge::EndNodeIndex, Edge::Proxy>([&](auto beginIndex,
-																					  auto endIndex,
-																					  auto& proxy) {
+		for (auto selectedNodeIndex: Selection::indices) {
+			for (auto [beginIndex, endIndex, proxy]:
+				 edges.view<Edge::members::beginNodeIndex, Edge::members::endNodeIndex, Edge::members::proxy>())
+			{
 				if (beginIndex == selectedNodeIndex) {
 					proxy.begin += offset;
 				}
 				if (endIndex == selectedNodeIndex) {
 					proxy.end += offset;
 				}
-			});
-		});
+			}
+		}
 	}
 	
 	std::optional<std::size_t> Network::edgeInPin(PinIndex const& desc) const {
-		return this->edges().find_if<Edge::EndNodeIndex,
-									 Edge::EndPinIndex,
-									 Edge::EndPinKind>([&](auto edgeIndex,
-														   auto endNodeIndex,
-														   auto endPinIndex,
-														   auto endPinKind) -> std::optional<std::size_t> {
+		for (std::size_t edgeIndex = 0;
+			 auto [endNodeIndex, endPinIndex, endPinKind]:
+			 edges.view<Edge::members::endNodeIndex, Edge::members::endPinIndex, Edge::members::endPinKind>())
+		{
 			if (endNodeIndex      == desc.nodeIndex &&
 				endPinIndex == desc.pinIndex &&
 				endPinKind  == desc.pinKind) {
 				return edgeIndex;
 			}
-			else {
-				return std::nullopt;
-			}
-		});
+			++edgeIndex;
+		}
+		return std::nullopt;
 	}
 	
 	/// MARK: - Traversal and queries	
@@ -596,17 +607,17 @@ namespace worldmachine {
 	}
 	
 	void Network::invalidateNodesDownstream(std::size_t nodeIndex, BuildType type) {
-		WM_BoundsCheck(nodeIndex, 0, nodes().size());
+		WM_BoundsCheck(nodeIndex, 0, nodes.size());
 		
 		traverseDownstreamNodes(nodeIndex, [&, this](std::size_t downstreamNodeIndex) {
-			WM_Log(debug, "Invalidating '{}'", nodes().get<Node::Name>(downstreamNodeIndex));
+			WM_Log(debug, "Invalidating '{}'", nodes[downstreamNodeIndex].name);
 			if (test(type & BuildType::highResolution)) {
-				nodes().get<Node::Flags>(downstreamNodeIndex) &= ~NodeFlags::built;
-				nodes().get<Node::Implementation>(downstreamNodeIndex)->_built = false;
+				nodes[downstreamNodeIndex].flags &= ~NodeFlags::built;
+				nodes[downstreamNodeIndex].implementation->_built = false;
 			}
 			if (test(type & BuildType::preview)) {
-				nodes().get<Node::Flags>(downstreamNodeIndex) &= ~NodeFlags::previewBuilt;
-				nodes().get<Node::Implementation>(downstreamNodeIndex)->_previewBuilt = false;
+				nodes[downstreamNodeIndex].flags &= ~NodeFlags::previewBuilt;
+				nodes[downstreamNodeIndex].implementation->_previewBuilt = false;
 			}
 		});
 	}
@@ -615,20 +626,28 @@ namespace worldmachine {
 		invalidateNodesDownstream(indexFromID(nodeID), type);
 	}
 	
-	utl::small_vector<std::size_t> Network::gatherLeaveNodes() {
+	utl::small_vector<std::size_t> Network::gatherLeafNodes() {
 		auto cond = [this](auto nodeIndex) {
-			return !edges().find_if<Edge::BeginNodeIndex>([nodeIndex](auto beginNodeIndex) {
-				return nodeIndex == beginNodeIndex;
-			});
+			for (auto beginNodeIndex: edges.view<Edge::members::beginNodeIndex>()) {
+				if (nodeIndex == beginNodeIndex) {
+					/* if any node comes from nodes[nodeIndex] then we are not a leaf */
+					return false;
+				}
+			}
+			return true;
 		};
 		return _gatherNodesImpl(cond);
 	}
 	
 	utl::small_vector<std::size_t> Network::gatherRootNodes() {
 		auto cond = [this](auto nodeIndex) {
-			return !edges().find_if<Edge::EndNodeIndex>([nodeIndex](auto endNodeIndex) {
-				return nodeIndex == endNodeIndex;
-			});
+			for (auto endNodeIndex: edges.view<Edge::members::endNodeIndex>()) {
+				if (nodeIndex == endNodeIndex) {
+					/* if any node ends in nodes[nodeIndex] then we are not a root */
+					return false;
+				}
+			}
+			return true;
 		};
 		
 		return _gatherNodesImpl(cond);
@@ -636,7 +655,7 @@ namespace worldmachine {
 	
 	utl::small_vector<std::size_t> Network::_gatherNodesImpl(auto&& cond) {
 		utl::small_vector<std::size_t> result;
-		for (std::size_t nodeIndex: utl::iota<std::size_t>(0, nodes().size())) {
+		for (std::size_t nodeIndex: utl::iota<std::size_t>(0, nodes.size())) {
 			if (cond(nodeIndex)) {
 				result.push_back(nodeIndex);
 			}
@@ -645,8 +664,8 @@ namespace worldmachine {
 	}
 	
 	NodeEdges Network::collectNodeEdges(std::size_t nodeIndex) const {
-		WM_BoundsCheck(nodeIndex, 0, nodes().size());
-		auto const& pinDescArray = nodes().get<NodePinDescriptorArray>(nodeIndex);
+		WM_BoundsCheck(nodeIndex, 0, nodes.size());
+		auto const& pinDescArray = nodes[nodeIndex].pinDescriptorArray;
 		
 		NodeEdges result;
 		result.inputEdges.resize(pinDescArray.input.size());
@@ -659,42 +678,33 @@ namespace worldmachine {
 			result.maskInputEdges[i].mandatory = pinDescArray.maskInput[i].mandatory();
 		}
 		
-		
-		edges().for_each<Edge::BeginNodeIndex, Edge::BeginPinIndex,
-						 Edge::BeginPinKind,
-						 Edge::EndNodeIndex, Edge::EndPinIndex,
-						 Edge::EndPinKind>([&](std::size_t beginNodeIndex,
-													 std::size_t beginPinIndex,
-													 PinKind beginPinKind,
-													 std::size_t endNodeIndex,
-													 std::size_t endPinIndex,
-													 PinKind endPinKind) {
-							 if (endNodeIndex != nodeIndex) {
-								 return;
-							 }
-							 auto const pushBack = [&](auto& container) {
-								 container[endPinIndex]   = NodeEdges::EdgeRepresentation{
-									 .beginNodeIndex      = beginNodeIndex,
-									 .beginPinIndex       = beginPinIndex,
-									 .beginPinKind        = beginPinKind,
-									 .endNodeIndex        = endNodeIndex,
-									 .endPinIndex         = endPinIndex,
-									 .endPinKind          = endPinKind,
-									 .present             = true,
-									 .mandatory           = nodes().get<NodePinDescriptorArray>(beginNodeIndex).get(beginPinKind)[beginPinIndex].mandatory()
-								 };
-							 };
-							 switch (endPinKind) {
-								 case PinKind::input:
-									 pushBack(result.inputEdges);
-									 break;
-								 case PinKind::maskInput:
-									 pushBack(result.maskInputEdges);
-									 break;
-								 default:
-									 break;
-							 }
-						 });
+		for (auto edge: edges) {
+			if (edge.endNodeIndex != nodeIndex) {
+				continue;
+			}
+			auto const pushBack = [&](auto& container) {
+				container[edge.endPinIndex]   = NodeEdges::EdgeRepresentation{
+					.beginNodeIndex = edge.beginNodeIndex,
+					.beginPinIndex  = edge.beginPinIndex,
+					.beginPinKind   = edge.beginPinKind,
+					.endNodeIndex   = edge.endNodeIndex,
+					.endPinIndex    = edge.endPinIndex,
+					.endPinKind     = edge.endPinKind,
+					.present        = true,
+					.mandatory      = nodes[edge.beginNodeIndex].pinDescriptorArray.get(edge.beginPinKind)[edge.beginPinIndex].mandatory()
+				};
+			};
+			switch (edge.endPinKind) {
+				case PinKind::input:
+					pushBack(result.inputEdges);
+					break;
+				case PinKind::maskInput:
+					pushBack(result.maskInputEdges);
+					break;
+				default:
+					break;
+			}
+		}
 		
 		return result;
 	}

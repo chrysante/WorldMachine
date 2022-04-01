@@ -19,7 +19,7 @@ namespace worldmachine {
 		if (nodeIndex == -1) {
 			return nullptr;
 		}
-		return _network->nodes().get<Node::Implementation>(nodeIndex).get();
+		return _network->nodes[nodeIndex].implementation.get();
 	}
 	
 }

@@ -36,7 +36,7 @@ namespace worldmachine {
 			auto const id = *i;
 			if (!network->allMandatoryUpstreamNodesConnected(id)) {
 				WM_Log(warning, "Upstream dependecies for node \"{}\" not connected",
-					   network->nodes().get<Node::Name>(network->indexFromID(id)));
+					   network->nodes[network->indexFromID(id)].name);
 				i = ids.erase(i);
 			}
 			else {
@@ -184,14 +184,14 @@ namespace worldmachine {
 					if (edge.present) {
 						WM_Assert(nodeIndex == edge.endNodeIndex, " ");
 						auto const inputNodeIndex = edge.beginNodeIndex;
-						WM_BoundsCheck(inputNodeIndex, 0, network->nodes().size());
+						WM_BoundsCheck(inputNodeIndex, 0, network->nodes.size());
 						auto const testFlag = buildType == BuildType::highResolution ? NodeFlags::built : NodeFlags::previewBuilt;
-						WM_Assert(!!(network->nodes().get<Node::Flags>(inputNodeIndex) & testFlag), "upstream node should have been build by now");
-						auto desc = network->nodes().get<NodePinDescriptorArray>(nodeIndex).get(edge.endPinKind)[edge.endPinIndex];
+						WM_Assert(!!(network->nodes[inputNodeIndex].flags & testFlag), "upstream node should have been build by now");
+						auto desc = network->nodes[nodeIndex].pinDescriptorArray.get(edge.endPinKind)[edge.endPinIndex];
 						dependencies.inputs.insert(decltype(dependencies.inputs)::value_type{
 							std::pair{ edge.endPinIndex, edge.endPinKind },
 							typename NodeDependencyMap::InputDependency {
-								network->nodes().get<Node::Implementation>(edge.beginNodeIndex).get(),
+								network->nodes[edge.beginNodeIndex].implementation.get(),
 								edge.beginPinIndex
 							}
 						});
@@ -211,8 +211,8 @@ namespace worldmachine {
 	void BuildSystem::nodeBuildFinished(Network* network, utl::UUID nodeID, bool success) {
 		network->locked([&]{
 			auto const nodeIndex = network->indexFromID(nodeID);
-			network->nodes().get<Node::BuildProgress>(nodeIndex) = 0;
-			auto* const impl = network->nodes().get<Node::Implementation>(nodeIndex).get();
+			network->nodes[nodeIndex].buildProgress = 0;
+			auto* const impl = network->nodes[nodeIndex].implementation.get();
 			impl->_isBuilding = false;
 			if (currentBuildType() == BuildType::preview)
 				impl->_previewBuilt = success;
@@ -220,18 +220,18 @@ namespace worldmachine {
 				impl->_built = success;
 			if (success) {
 				if (currentBuildType() == BuildType::highResolution) {
-					network->nodes().get<Node::Flags>(nodeIndex) |= NodeFlags::built;
+					network->nodes[nodeIndex].flags |= NodeFlags::built;
 				}
 				else {
-					network->nodes().get<Node::Flags>(nodeIndex) |= NodeFlags::previewBuilt;
+					network->nodes[nodeIndex].flags |= NodeFlags::previewBuilt;
 				}
 			}
-			network->nodes().get<Node::Flags>(nodeIndex) &= ~NodeFlags::building;
+			network->nodes[nodeIndex].flags &= ~NodeFlags::building;
 			if (success) {
-				WM_Log(info, "Finished building '{}'", network->nodes().get<Node::Name>(nodeIndex));
+				WM_Log(info, "Finished building '{}'", network->nodes[nodeIndex].name);
 			}
 			else {
-				WM_Log(warning, "Cancelled build of '{}' [index = {}]", network->nodes().get<Node::Name>(nodeIndex), nodeIndex);
+				WM_Log(warning, "Cancelled build of '{}' [index = {}]", network->nodes[nodeIndex].name, nodeIndex);
 			}
 		});
 		
@@ -306,8 +306,8 @@ namespace worldmachine {
 		
 		LOG_COORD(debug, "Unbuild roots are:");
 		for ([[maybe_unused]] auto id: unbuildRoots) {
-			LOG_COORD("    {} [index = {}, id = {}]", network->nodes().get<Node::Name>(network->indexFromID(id)),
-				   network->indexFromID(id), id);
+			LOG_COORD("    {} [index = {}, id = {}]", network->nodes[network->indexFromID(id)].name,
+					  network->indexFromID(id), id);
 		}
 		
 		// gather all the current build jobs
@@ -315,7 +315,7 @@ namespace worldmachine {
 		try {
 			for (auto id: unbuildRoots) {
 				std::size_t const nodeIndex = network->indexFromID(id);
-				auto* impl = network->nodes().get<Node::Implementation>(nodeIndex).get();
+				auto* impl = network->nodes[nodeIndex].implementation.get();
 				WM_Assert(impl->currentBuildType() == this->currentBuildType());
 				WM_Assert(impl->currentBuildResolution() == this->currentBuildResolution());
 				
@@ -339,7 +339,7 @@ namespace worldmachine {
 			utl::dispatch_group g;
 			std::size_t const nodeIndex = network->indexFromID(nodeID);
 			network->locked([&]{
-				network->nodes().get<Node::Flags>(nodeIndex) |= NodeFlags::building;
+				network->nodes[nodeIndex].flags |= NodeFlags::building;
 			});
 			
 			
@@ -349,7 +349,7 @@ namespace worldmachine {
 				auto jobWrapper = [=, oneJob = std::move(oneJob)] {
 					oneJob();
 					network->locked([&]{
-						network->nodes().get<Node::BuildProgress>(nodeIndex) += oneProgress;
+						network->nodes[nodeIndex].buildProgress += oneProgress;
 					});
 					_info._progress += std::uint32_t(oneProgress * UINT_MAX / totalTargetBuildCount);
 					network->_buildInfo._progress += std::uint32_t(oneProgress * UINT_MAX / totalTargetBuildCount);
@@ -371,7 +371,7 @@ namespace worldmachine {
 					nodeCleanupHandler();
 				nodeBuildFinished(network, nodeID, false);
 			});
-			network->nodes().get<Node::Implementation>(nodeIndex)->_isBuilding = true;
+			network->nodes[nodeIndex].implementation->_isBuilding = true;
 			dispatchQueue.async(std::move(g));
 		}
 		signal = Signal::sleep;
@@ -384,7 +384,7 @@ namespace worldmachine {
 		LOG_COORD(debug, "locking network");
 		network->locked([&]{
 			for (auto id: buildingNodes) {
-				network->nodes().get<Node::BuildProgress>(network->indexFromID(id)) = 0;
+				network->nodes[network->indexFromID(id)].buildProgress = 0;
 			}
 		});
 		LOG_COORD(debug, "cleanup");
@@ -407,7 +407,7 @@ namespace worldmachine {
 		WM_Assert(buildingNodes.empty());
 		
 		if (nodes.empty()) {
-			nodes = network->IDsFromIndices(network->gatherLeaveNodes());
+			nodes = network->IDsFromIndices(network->gatherLeafNodes());
 		}
 		
 		_info._type = type;
@@ -429,7 +429,7 @@ namespace worldmachine {
 		totalTargetBuildCount = calculateTotalTargetBuildCount(network, nodes);
 		traverseUnique(network, network->indicesFromIDs(nodes),
 					   [this, network](std::size_t nodeIndex){
-			auto flags = network->nodes().get<Node::Flags>(nodeIndex);
+			auto flags = network->nodes[nodeIndex].flags;
 			WM_Assert(!(flags & NodeFlags::building), "This node should not be building right now");
 			auto const isBuiltFlag = _info.type() == BuildType::highResolution ? NodeFlags::built : NodeFlags::previewBuilt;
 			if (test(flags & isBuiltFlag)) {
@@ -437,7 +437,7 @@ namespace worldmachine {
 				++nodeBuildsCompleted;
 				_info._progress += UINT_MAX / totalTargetBuildCount;
 			}
-			auto* const impl = network->nodes().get<Node::Implementation>(nodeIndex).get();
+			auto* const impl = network->nodes[nodeIndex].implementation.get();
 			
 			impl->_currentBuildType = this->currentBuildType();
 			impl->_previewBuildResolution = this->previewResolution;
@@ -445,7 +445,7 @@ namespace worldmachine {
 		});
 		LOG_COORD(debug, "Sanity checks completed. Now Building {} Nodes. Leaf nodes are:", totalTargetBuildCount);
 		for ([[maybe_unused]] auto id: nodes) {
-			LOG_COORD("    {}", network->nodes().get<Node::Name>(network->indexFromID(id)));
+			LOG_COORD("    {}", network->nodes[network->indexFromID(id)].name);
 		}
 		LOG_COORD(debug, "Starting coordinator");
 		coordThread = std::thread([=, nodes = std::move(nodes)]{

@@ -25,7 +25,7 @@ namespace worldmachine {
 		
 		/// Name input
 		auto const nodeIndex = network()->indexFromID(activeNode->nodeID());
-		auto const& nodeName = network()->nodes().get<Node::Name>(nodeIndex);
+		auto const& nodeName = network()->nodes[nodeIndex].name;
 		std::size_t constexpr bufferLength = 256;
 		char buffer[bufferLength]{};
 		std::copy(nodeName.begin(),
@@ -33,7 +33,7 @@ namespace worldmachine {
 				  buffer);
 		
 		if (ImGui::InputText("Name", buffer, bufferLength)) {
-			network()->nodes().get<Node::Name>(nodeIndex) = buffer;
+			network()->nodes[nodeIndex].name = buffer;
 		}
 		ImGui::Separator();
 		if (activeNode->displayControls()) {

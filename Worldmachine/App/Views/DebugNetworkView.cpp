@@ -137,17 +137,19 @@ namespace worldmachine {
 				case NetworkHitResult::Type::node:
 					text = utl::format("Node {} [position = {}, category = {}]",
 									   hitResult.node.index,
-									   network->nodes().get<Node::Position>(hitResult.node.index),
-									   network->nodes().get<Node::Category>(hitResult.node.index));
+									   network->nodes[hitResult.node.index].position,
+									   network->nodes[hitResult.node.index].category);
 					break;
 
 				case NetworkHitResult::Type::background:
 					text = "Background";
 					break;
 				case NetworkHitResult::Type::edge: {
-					auto const nodeIndexFrom = network->edges().get<Edge::BeginNodeIndex>(hitResult.edge.index);
-					auto const nodeIndexTo = network->edges().get<Edge::EndNodeIndex>(hitResult.edge.index);
-					text = utl::format("Edge [{} -> {}]", network->nodes().get<Node::Name>(nodeIndexFrom), network->nodes().get<Node::Name>(nodeIndexTo));
+					auto const nodeIndexFrom = network->edges[hitResult.edge.index].beginNodeIndex;
+					auto const nodeIndexTo = network->edges[hitResult.edge.index].endNodeIndex;
+					text = utl::format("Edge [{} -> {}]",
+									   network->nodes[nodeIndexFrom].name,
+									   network->nodes[nodeIndexTo].name);
 					break;
 				}
 					

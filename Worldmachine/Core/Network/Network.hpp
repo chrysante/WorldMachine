@@ -35,17 +35,15 @@ namespace worldmachine {
 	/// MARK: - EdgeCollection
 	class EdgeCollection {
 	private:
-		using EdgeContainerType = utl::structure_of_arrays<EdgeType>;
+		using EdgeContainerType = utl::structure_of_arrays<Edge>;
 		
 	public:
-		auto& edges() { return m_edges; }
-		auto& edges() const { return m_edges; }
-		
 		auto const& edgeParams() const { return m_edgeParams; }
-		std::size_t edgeCount() const { return edges().size(); }
+		std::size_t edgeCount() const { return edges.size(); }
+		
+		EdgeContainerType edges;
 		
 	private:
-		EdgeContainerType m_edges;
 		EdgeParameters m_edgeParams = defaultEdgeParameters();
 	};
 	
@@ -53,17 +51,14 @@ namespace worldmachine {
 	/// MARK: - NodeCollection
 	class NodeCollection {
 	private:
-		using NodeContainerType = utl::structure_of_arrays<NodeSOAType>;
+		using NodeContainerType = utl::structure_of_arrays<Node>;
 
 	public:
 		NodeCollection();
 		
 		std::size_t addNode(NodeDescriptor);
 		
-		std::size_t nodeCount() const { return m_nodes.size(); }
-		
-		auto& nodes() { return m_nodes; }
-		auto& nodes() const { return m_nodes; }
+		std::size_t nodeCount() const { return nodes.size(); }
 		
 		auto const& nodeParams() const { return m_nodeParams; }
 		
@@ -84,8 +79,9 @@ namespace worldmachine {
 								   std::size_t pinIndex,
 								   NodeParameters const& params);
 		
+		NodeContainerType nodes;
+		
 	private:
-		NodeContainerType m_nodes;
 		NodeParameters m_nodeParams = defaultNodeParameters();
 	};
 	
@@ -153,7 +149,7 @@ namespace worldmachine {
 		
 		using SelectionManager::isSelected;
 		
-		void clear() { nodes().clear(); edges().clear(); }
+		void clear() { nodes.clear(); edges.clear(); }
 		
 		long indexFromID(utl::UUID id) const;
 		utl::UUID IDFromIndex(std::size_t nodeIndex) const;
@@ -175,19 +171,19 @@ namespace worldmachine {
 		
 	protected:
 		bool testNodeFlag(std::size_t nodeIndex, NodeFlags flag) const {
-			return !!(nodes().get<NodeFlags>(nodeIndex) & flag);
+			return !!(nodes[nodeIndex].flags & flag);
 		}
 		
 		void setNodeFlag(std::size_t nodeIndex, NodeFlags flag) {
-			nodes().get<NodeFlags>(nodeIndex) |= flag;
+			nodes[nodeIndex].flags |= flag;
 		}
 		
 		void clearNodeFlag(std::size_t nodeIndex, NodeFlags flag) {
-			nodes().get<NodeFlags>(nodeIndex) &= ~flag;
+			nodes[nodeIndex].flags &= ~flag;
 		}
 		
 		void toggleNodeFlag(std::size_t nodeIndex, NodeFlags flag) {
-			nodes().get<NodeFlags>(nodeIndex) ^= flag;
+			nodes[nodeIndex].flags ^= flag;
 		}
 		
 		using Nodes     = NodeCollection;
@@ -311,7 +307,7 @@ namespace worldmachine {
 		void moveSelected(mtl::float2 offset);
 		
 		/// Traversal and queries
-		utl::small_vector<std::size_t>  gatherLeaveNodes();
+		utl::small_vector<std::size_t>  gatherLeafNodes();
 		utl::small_vector<std::size_t>  gatherRootNodes();
 		bool allMandatoryUpstreamNodesConnected(utl::UUID nodeID) const;
 		bool allMandatoryUpstreamNodesConnected(std::size_t nodeIndex) const;
@@ -402,7 +398,7 @@ namespace worldmachine {
 	}
 	
 	template <bool Reverse>
-	void Network::_traverseUpstreamNodesImpl(auto* _this, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
+	void Network::_traverseUpstreamNodesImpl(auto* network, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
 		if constexpr (!Reverse) {
 			if constexpr (requires{ { f(std::size_t{}) } -> utl::convertible_to<bool>;  }) {
 				if (!f(nodeIndex)) {
@@ -413,16 +409,24 @@ namespace worldmachine {
 				f(nodeIndex);
 			}
 		}
-		_this->edges().template for_each<Edge::BeginNodeIndex, Edge::BeginPinIndex,
-										 Edge::EndNodeIndex, Edge::EndPinIndex,
-										 Edge::EndPinKind>([&](std::size_t beginNodeIndex,
-																	 std::size_t beginPinIndex,
-																	 std::size_t endNodeIndex,
-																	 std::size_t endPinIndex,
-																	 PinKind endPinKind) {
-											 if (endNodeIndex != nodeIndex) { return; }
-											 _traverseUpstreamNodesImpl<Reverse>(_this, beginNodeIndex, f);
-										 });
+#warning
+		for (auto [beginNodeIndex,
+				   beginPinIndex,
+				   endNodeIndex,
+				   endPinIndex,
+				   endPinKind]:
+			 network->edges.template view<Edge::members::beginNodeIndex,
+										  Edge::members::beginPinIndex,
+										  Edge::members::endNodeIndex,
+										  Edge::members::endPinIndex,
+										  Edge::members::endPinKind>())
+		{
+			if (endNodeIndex != nodeIndex) {
+				continue;
+			}
+			_traverseUpstreamNodesImpl<Reverse>(network, beginNodeIndex, f);
+		}
+		
 		if constexpr (Reverse) {
 			if constexpr (requires{ { f(std::size_t{}) } -> utl::convertible_to<bool>;  }) {
 				if (!f(nodeIndex)) {
@@ -458,22 +462,28 @@ namespace worldmachine {
 	}
 	
 	template <bool Reverse>
-	void Network::_traverseDownstreamNodesImpl(auto* _this, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
+	void Network::_traverseDownstreamNodesImpl(auto* network, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
 		if constexpr (!Reverse) {
 			f(nodeIndex);
 		}
-		_this->edges().template for_each<Edge::BeginNodeIndex,
-										 Edge::BeginPinIndex,
-										 Edge::BeginPinKind,
-										 Edge::EndNodeIndex,
-										 Edge::EndPinIndex>([&](std::size_t beginNodeIndex,
-																	  std::size_t beginPinIndex,
-																	  PinKind beginPinKind,
-																	  std::size_t endNodeIndex,
-																	  std::size_t endPinIndex) {
-											 if (beginNodeIndex != nodeIndex) { return; }
-											 _traverseDownstreamNodesImpl<Reverse>(_this, endNodeIndex, f);
-										 });
+#warning
+		for (auto [beginNodeIndex,
+				   beginPinIndex,
+				   beginPinKind,
+				   endNodeIndex,
+				   endPinIndex]:
+			 network->edges.template view<Edge::members::beginNodeIndex,
+										  Edge::members::beginPinIndex,
+										  Edge::members::beginPinKind,
+										  Edge::members::endNodeIndex,
+										  Edge::members::endPinIndex>())
+		{
+			if (beginNodeIndex != nodeIndex) {
+				continue;
+			}
+			_traverseDownstreamNodesImpl<Reverse>(network, endNodeIndex, f);
+		}
+		
 		if constexpr (Reverse) {
 			f(nodeIndex);
 		}

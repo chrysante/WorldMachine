@@ -134,7 +134,7 @@ namespace worldmachine {
 		return {
 			toEvent(event),
 			.locationInWindow = { event.locationInWindow.x, event.locationInWindow.y },
-			.locationInView   = {  }
+			.locationInView   = { event.locationInWindow.x, event.locationInWindow.y }
 		};
 	}
 	

@@ -29,34 +29,45 @@ namespace worldmachine {
 		ImplementationID implementationID;
 	};
 	
+	UTL_SOA_TYPE(Node,
+				 (std::string,                  name),
+				 (NodeCategory,                 category),
+				 (mtl::float3,                  position),
+				 (mtl::float2,                  size),
+				 (float,                        buildProgress),
+				 (PinCount<>,                   pinCount),
+				 (NodeFlags,                    flags),
+				 (utl::UUID,                    id),
+				 (utl::ref<NodeImplementation>, implementation),
+				 (NodePinDescriptorArray,       pinDescriptorArray)
+				 );
 	
-	
-	struct Node {
-		using Name                     = utl::named_type<std::string,	struct NameTag>;
-		using Category                 = NodeCategory;
-		using Position                 = utl::named_type<mtl::float3,	struct PositionTag>;
-		using Size                     = utl::named_type<mtl::float2,	struct SizeTag>;
-		using BuildProgress            = utl::named_type<float,         struct BuildProgressTag>;
-		using PinCount                 = worldmachine::PinCount<>;
-		using Flags                    = NodeFlags;
-		using ID                       = utl::named_type<utl::UUID,		struct IDTag>;;
-		using Implementation           = utl::ref<NodeImplementation>;
-		using PinDescriptorArray       = NodePinDescriptorArray;
-	};
-	
-	
-	using NodeSOAType = std::tuple<
-		Node::Name,
-		Node::Category,
-		Node::Position,
-		Node::Size,
-		Node::BuildProgress,
-		Node::PinCount,
-		Node::Flags,
-		Node::ID,
-		Node::Implementation,
-		Node::PinDescriptorArray
-	>;
+//	struct Node {
+//		using Name                     = utl::named_type<std::string,	struct NameTag>;
+//		using Category                 = NodeCategory;
+//		using Position                 = utl::named_type<mtl::float3,	struct PositionTag>;
+//		using Size                     = utl::named_type<mtl::float2,	struct SizeTag>;
+//		using BuildProgress            = utl::named_type<float,         struct BuildProgressTag>;
+//		using PinCount                 = worldmachine::PinCount<>;
+//		using Flags                    = NodeFlags;
+//		using ID                       = utl::named_type<utl::UUID,		struct IDTag>;;
+//		using Implementation           = utl::ref<NodeImplementation>;
+//		using PinDescriptorArray       = NodePinDescriptorArray;
+//	};
+//	
+//	
+//	using NodeSOAType = std::tuple<
+//		Node::Name,
+//		Node::Category,
+//		Node::Position,
+//		Node::Size,
+//		Node::BuildProgress,
+//		Node::PinCount,
+//		Node::Flags,
+//		Node::ID,
+//		Node::Implementation,
+//		Node::PinDescriptorArray
+//	>;
 	
 	inline mtl::float2 nodeSize(NodeParameters nodeParams, PinCount<float> pinCount) {
 		float const x = [&]{

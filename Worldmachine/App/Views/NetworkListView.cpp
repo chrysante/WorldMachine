@@ -17,7 +17,7 @@ namespace worldmachine {
 	void NetworkListView::display() {
 		using namespace ImGui;
 		
-		auto const& nodes = network->nodes();
+		auto const& nodes = network->nodes;
 		std::size_t const nodeCount = nodes.size();
 		selected.resize(nodeCount);
 		std::memset(selected.data(), 0, nodeCount * sizeof(bool));
@@ -26,7 +26,7 @@ namespace worldmachine {
 		}
 		
 		for (std::size_t i = 0; i < nodeCount; ++i) {
-			auto const& name = nodes.get<Node::Name>(i);
+			auto const& name = nodes[i].name;
 			if (ImGui::Selectable(name.empty() ? "##" : name.data(), &selected[i])) {
 				network->clearSelection();
 				network->selectNode(i);

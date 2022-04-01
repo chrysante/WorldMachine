@@ -77,7 +77,6 @@ namespace worldmachine {
 		utl::small_vector<PinDescriptor, 8> parameterInput;
 		utl::small_vector<PinDescriptor, 2> maskInput;
 		
-		
 		utl::vector<PinDescriptor> const& get(PinKind ifKind) const {
 			switch (ifKind) {
 				case PinKind::input:

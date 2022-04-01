@@ -67,6 +67,8 @@ namespace worldmachine {
 		
 #ifdef WORLDMACHINE_CPP
 		
+		bool operator==(PinCount const&) const = default;
+		
 		T get(PinKind ifKind) const {
 			static_assert(utl::to_underlying(PinKind::input) == 0);
 			static_assert(utl::to_underlying(PinKind::output) == 1);

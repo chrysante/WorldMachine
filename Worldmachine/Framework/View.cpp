@@ -3,6 +3,7 @@
 #include "View.hpp"
 
 #include <utl/scope_guard.hpp>
+#include <utl/typeinfo.hpp>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 
@@ -144,18 +145,21 @@ namespace worldmachine {
 	}
 	
 	template<typename T>
-	static constexpr bool hasOffset = requires (T&& t) { { t.offset } -> mtl::same_as<mtl::double2>; };
+	static constexpr bool hasOffset = requires (T&& t) { t.offset; };
 	
 	template<typename T>
 	static constexpr bool hasLocation = requires (T&& t) {
-		{ t.locationInView } -> mtl::same_as<mtl::double2>;
-		{ t.locationInWindow } -> mtl::same_as<mtl::double2>;
+		{ t.locationInView } /*-> std::same_as<mtl::double2>*/;
+		{ t.locationInWindow } /*-> std::same_as<mtl::double2>*/;
 	};
 	
 	template <typename E>
 	void maybeTransformOffset(E& e) {
 		if constexpr (hasOffset<E>) {
-			e.offset.y *= -1.0;
+			using T = decltype(e.offset);
+			if constexpr (mtl::get_vector_size<T>::value == 2) {
+				e.offset.y *= -1.0;
+			}
 		}
 	}
 	
