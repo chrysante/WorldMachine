@@ -306,7 +306,7 @@ namespace worldmachine {
 		void moveToTop(std::size_t nodeIndex); 
 		void moveSelected(mtl::float2 offset);
 		
-		/// Traversal and queries
+		/// Queries
 		utl::small_vector<std::size_t>  gatherLeafNodes();
 		utl::small_vector<std::size_t>  gatherRootNodes();
 		bool allMandatoryUpstreamNodesConnected(utl::UUID nodeID) const;
@@ -315,17 +315,6 @@ namespace worldmachine {
 		void invalidateNodesDownstream(std::size_t nodeIndex, BuildType = BuildType::all);
 		void invalidateNodesDownstream(utl::UUID nodeID, BuildType = BuildType::all);
 		void invalidateAllNodes(BuildType = BuildType::all);
-		
-		void traverseUpstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f);
-		void traverseUpstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f);
-		void traverseUpstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const;
-		void traverseUpstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const;
-		
-		
-		void traverseDownstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f);
-		void traverseDownstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f);
-		void traverseDownstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const;
-		void traverseDownstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const;
 		
 		NodeEdges collectNodeEdges(std::size_t nodeIndex) const;
 		
@@ -369,124 +358,6 @@ namespace worldmachine {
 		private:
 			std::size_t beginNodeIndex, thisVisitCount;
 		};
-	}
-	
-	void Network::traverseUpstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		_traverseUpstreamNodesStartImpl<true>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	void Network::traverseUpstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		_traverseUpstreamNodesStartImpl<false>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	void Network::traverseUpstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const {
-		_traverseUpstreamNodesStartImpl<true>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	void Network::traverseUpstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const {
-		_traverseUpstreamNodesStartImpl<false>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	template <bool Reverse>
-	void Network::_traverseUpstreamNodesStartImpl(auto* _this, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		internal::CycleChecker cycleChecker(nodeIndex);
-		_traverseUpstreamNodesImpl<Reverse>(_this, nodeIndex, [&](std::size_t i) {
-			cycleChecker(i);
-			if constexpr (requires{ { f(std::size_t{}) } -> utl::convertible_to<bool>;  }) {
-				return f(i);
-			}
-			else {
-				f(i);
-			}
-		});
-	}
-	
-	template <bool Reverse>
-	void Network::_traverseUpstreamNodesImpl(auto* network, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		if constexpr (!Reverse) {
-			if constexpr (requires{ { f(std::size_t{}) } -> utl::convertible_to<bool>;  }) {
-				if (!f(nodeIndex)) {
-					return;
-				}
-			}
-			else {
-				f(nodeIndex);
-			}
-		}
-#warning
-		for (auto [beginNodeIndex,
-				   beginPinIndex,
-				   endNodeIndex,
-				   endPinIndex,
-				   endPinKind]:
-			 network->edges.template view<Edge::members::beginNodeIndex,
-										  Edge::members::beginPinIndex,
-										  Edge::members::endNodeIndex,
-										  Edge::members::endPinIndex,
-										  Edge::members::endPinKind>())
-		{
-			if (endNodeIndex != nodeIndex) {
-				continue;
-			}
-			_traverseUpstreamNodesImpl<Reverse>(network, beginNodeIndex, f);
-		}
-		
-		if constexpr (Reverse) {
-			if constexpr (requires{ { f(std::size_t{}) } -> utl::convertible_to<bool>;  }) {
-				if (!f(nodeIndex)) {
-					return;
-				}
-			}
-			else {
-				f(nodeIndex);
-			}
-		}
-	}
-	
-	void Network::traverseDownstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		_traverseDownstreamNodesStartImpl<true>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	void Network::traverseDownstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		_traverseDownstreamNodesStartImpl<false>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	void Network::traverseDownstreamNodesReverse(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const {
-		_traverseDownstreamNodesStartImpl<true>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	void Network::traverseDownstreamNodes(std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) const {
-		_traverseDownstreamNodesStartImpl<false>(this, nodeIndex, UTL_FORWARD(f));
-	}
-	
-	template <bool Reverse>
-	void Network::_traverseDownstreamNodesStartImpl(auto* _this, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		internal::CycleChecker cycleChecker(nodeIndex);
-		_traverseDownstreamNodesImpl<Reverse>(_this, nodeIndex, [&](std::size_t i) {
-			cycleChecker(i);
-			f(i);
-		});
-	}
-	
-	template <bool Reverse>
-	void Network::_traverseDownstreamNodesImpl(auto* network, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f) {
-		if constexpr (!Reverse) {
-			f(nodeIndex);
-		}
-#warning
-		for (auto [beginNodeIndex,
-				   beginPinIndex,
-				   beginPinKind,
-				   endNodeIndex,
-				   endPinIndex]:
-			 network->edges.template view<Edge::members::beginNodeIndex,
-										  Edge::members::beginPinIndex,
-										  Edge::members::beginPinKind,
-										  Edge::members::endNodeIndex,
-										  Edge::members::endPinIndex>())
-		{
-			if (beginNodeIndex != nodeIndex) {
-				continue;
-			}
-			_traverseDownstreamNodesImpl<Reverse>(network, endNodeIndex, f);
-		}
-		
-		if constexpr (Reverse) {
-			f(nodeIndex);
-		}
 	}
 	
 }

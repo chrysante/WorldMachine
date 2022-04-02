@@ -10,10 +10,10 @@
 #include <utl/format.hpp>
 #include <type_traits>
 #include <string>
+#include <optional>
 
 #include "Network/Node.hpp"
 #include "Network/NodeImplementation.hpp"
-
 
 
 
@@ -37,6 +37,8 @@ namespace worldmachine {
 	class Registry {
 		friend class Plugin;
 		friend class PluginManager;
+		
+	public:
 		class NodeVTable {
 		public:
 			utl::UUID pluginID() const { return _pluginID; }
@@ -47,6 +49,9 @@ namespace worldmachine {
 		private:
 			friend class Registry;
 			friend class Plugin;
+			static NodeVTable createFallback();
+			
+		private:
 			utl::UUID _pluginID;
 			std::string _buildTime;
 			utl::function<utl::unique_ref<NodeImplementation>()> _create;
@@ -57,10 +62,12 @@ namespace worldmachine {
 		static Registry& instance();
 		
 	public:
+		Registry();
+		
 		template <typename NodeType>
 		void registerNode(std::string buildTime);
 		
-		utl::unique_ref<NodeImplementation> createNodeImplementation(ImplementationID, utl::UUID nodeID) const;
+		utl::unique_ref<NodeImplementation> createNodeImplementation(std::optional<ImplementationID>, utl::UUID nodeID) const;
 		NodeDescriptor createDescriptorFromID(ImplementationID) const;
 		utl::vector<ImplementationID> getIDs() const;
 		
@@ -73,6 +80,7 @@ namespace worldmachine {
 		
 	private:
 		utl::hashmap<ImplementationID, NodeVTable> vtables;
+		NodeVTable fallbackVTable;
 	};
 	
 }

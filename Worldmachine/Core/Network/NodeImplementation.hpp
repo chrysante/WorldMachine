@@ -79,6 +79,23 @@ namespace worldmachine {
 		std::atomic_bool _previewBuilt = false;
 	};
 
+	/// MARK: FallbackNodeImplementation
+	class FallbackNodeImplementation: public NodeImplementation {
+	public:
+		FallbackNodeImplementation(): NodeImplementation(NodeType::none) {}
+		bool displayControls() override { return false; }
+		BuildJob makeBuildJob(NodeDependencyMap) override;
+		
+	private:
+		std::string_view _implName() const noexcept override {
+			return "Fallback";
+		}
+		ImplementationID _implID() const noexcept override {
+			return ImplementationID(235892367492305893);
+		}
+		void dynamicInit() override {}
+	};
+	
 	/// MARK: - ImageNodeImplementation
 	class ImageNodeImplementation: public NodeImplementation {
 		friend class BuildSystem;

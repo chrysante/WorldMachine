@@ -8,13 +8,29 @@
 
 namespace worldmachine {
 	
+	Registry::NodeVTable Registry::NodeVTable::createFallback() {
+		NodeVTable result;
+		result._pluginID = utl::UUID::generate();
+		result._buildTime = "99:99:99";
+		result._create = []{
+			return utl::make_unique_ref<FallbackNodeImplementation>();
+		};
+		result._descriptor = {};
+		return result;
+	}
+	
+	Registry::Registry(): fallbackVTable(NodeVTable::createFallback()) {
+		
+	}
+	
 	Registry& Registry::instance() {
 		static Registry registry;
 		return registry;
 	}
 	
-	utl::unique_ref<NodeImplementation> Registry::createNodeImplementation(ImplementationID id, utl::UUID nodeID) const {
-		auto result = getVTable(id).createImplementation();
+	utl::unique_ref<NodeImplementation> Registry::createNodeImplementation(std::optional<ImplementationID> id, utl::UUID nodeID) const {
+		NodeVTable const& vtable = id ? getVTable(*id) : fallbackVTable;
+		auto result = vtable.createImplementation();
 		result->_nodeID = nodeID;
 		result->dynamicInit();
 		return result;

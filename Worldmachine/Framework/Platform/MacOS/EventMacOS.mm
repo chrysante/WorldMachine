@@ -134,7 +134,10 @@ namespace worldmachine {
 		return {
 			toEvent(event),
 			.locationInWindow = { event.locationInWindow.x, event.locationInWindow.y },
-			.locationInView   = { event.locationInWindow.x, event.locationInWindow.y }
+			.locationInView   = {
+				/* will be overridden later, so setting it to NAN here for easier debugging */
+				std::numeric_limits<double>::signaling_NaN()
+			}
 		};
 	}
 	

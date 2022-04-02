@@ -2,39 +2,29 @@
 
 #include "Core/Base.hpp"
 
-#include <ostream>
+#include <iosfwd>
 #include <mtl/mtl.hpp>
+#include <utl/common.hpp>
 #include <utl/utility.hpp>
+
 
 namespace worldmachine {
 	
 	enum struct DataType: unsigned {
 		none   = 0,
 		
-		float1 = 1 << 0, /* 1 */
-		float2 = 1 << 1, /* 2 */
-		float3 = 1 << 2, /* 4 */
-		float4 = 1 << 3  /* 8 */
+		float1  = 1 << 0,
+		float2  = 1 << 1,
+		float3  = 1 << 2,
+		float4  = 1 << 3,
+		integer = 1 << 4
 	};
 
 	UTL_ENUM_OPERATORS(DataType);
 	
-	inline std::ostream& operator<<(std::ostream& str, DataType t) {
-		auto const Int = utl::to_underlying(t);
-		if (!Int) {
-			return str << "none";
-		}
-		return str << std::array{
-			"float",
-			"float2",
-			"float3",
-			"float4"
-		}[utl::log2(Int)];
-	}
+	std::ostream& operator<<(std::ostream& str, DataType t);
 
-	inline std::size_t dataTypeSize(DataType t) {
-		return sizeof(float) * utl::to_underlying(t);
-	}
+	std::size_t dataTypeSize(DataType t);
 
 
 	template <DataType DT>

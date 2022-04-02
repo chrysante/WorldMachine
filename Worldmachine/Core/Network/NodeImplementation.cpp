@@ -8,6 +8,8 @@
 
 #include "Core/Debug.hpp"
 #include "Core/Registry.hpp"
+#include "Core/BuildJob.hpp"
+#include "Core/Network/NodeDependencyMap.hpp"
 
 #include "Node.hpp"
 #include "NodeDependencyMap.hpp"
@@ -18,6 +20,11 @@ namespace worldmachine {
 	mtl::usize2 NodeImplementation::buildResolution(BuildType type) const {
 		WM_Assert(type == BuildType::preview || type == BuildType::highResolution);
 		return type == BuildType::preview ? _previewBuildResolution : _highresBuildResolution;
+	}
+	
+	/// MARK: FallbackNodeImplementation
+	BuildJob FallbackNodeImplementation::makeBuildJob(NodeDependencyMap) {
+		return {};
 	}
 	
 	/// MARK: - ImageNodeImplementation

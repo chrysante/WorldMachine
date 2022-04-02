@@ -8,6 +8,7 @@
 #include "Core/Network/Network.hpp"
 #include "Core/Network/NodeImplementation.hpp"
 #include "Core/Network/NodeDependencyMap.hpp"
+#include "Core/Network/NetworkTraversal.hpp"
 
 
 #if 1
@@ -47,14 +48,13 @@ namespace worldmachine {
 	
 	static bool isInnerNode(Network const* network, utl::UUID id, std::span<utl::UUID const> ids) {
 		std::size_t index = network->indexFromID(id);
-		return checkThrows<int>([&]{
-			network->traverseDownstreamNodes(index, [&](std::size_t downstreamIndex){
-				auto const downstreamID = network->IDFromIndex(downstreamIndex);
-				if (downstreamIndex != index && std::find(ids.begin(), ids.end(), downstreamID) != ids.end()) {
-					throw int{};
-				}
-			});
-		});
+		for (std::size_t const downstreamIndex: NetworkTraversalView(network, index)) {
+			auto const downstreamID = network->IDFromIndex(downstreamIndex);
+			if (downstreamIndex != index && std::find(ids.begin(), ids.end(), downstreamID) != ids.end()) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	static void pruneInnerNodes(Network const* network, utl::vector<utl::UUID>* nodeIDs) {
@@ -78,11 +78,11 @@ namespace worldmachine {
 		utl::hashset<std::size_t> visited;
 		visited.reserve(nodeIndices.size());
 		for (auto leafIndex: nodeIndices) {
-			network->traverseUpstreamNodes(leafIndex, [&](std::size_t nodeIndex){
+			for (std::size_t const nodeIndex: utl::reverse(NetworkTraversalView(network, leafIndex))) {
 				if (visited.insert(nodeIndex).second) {
 					f(nodeIndex);
 				}
-			});
+			}
 		}
 		
 	}
@@ -123,17 +123,16 @@ namespace worldmachine {
 		
 		auto const indices = network->indicesFromIDs(leaves);
 		for (auto const index: indices) {
-			network->traverseUpstreamNodes(index, [&](std::size_t nodeIndex) {
+			for (std::size_t const nodeIndex: utl::reverse(NetworkTraversalView(network, index))) {
 				auto const nodeID = network->IDFromIndex(nodeIndex);
 				if (allUpstreamNodesAreBuilt(network, nodeIndex) &&
 					!buildingNodes.contains(nodeID) &&
 					!builtNodes.contains(nodeID))
 				{
 					unbuiltRoots.insert(network->IDFromIndex(nodeIndex));
-					return false;
+					break;
 				}
-				return true;
-			});
+			}
 		}
 		
 		utl::small_vector<utl::UUID, 8> result(unbuiltRoots.begin(), unbuiltRoots.end());
@@ -141,14 +140,14 @@ namespace worldmachine {
 	}
 	
 	bool BuildSystem::allUpstreamNodesAreBuilt(Network const* network, std::size_t nodeIndex) const {
-		return !checkThrows<int>([&]{
-			network->traverseUpstreamNodes(nodeIndex, [&](std::size_t upstreamIndex) {
-				if (upstreamIndex != nodeIndex && !builtNodes.contains(network->IDFromIndex(upstreamIndex)))
-				{
-					throw int{};
-				}
-			});
-		});
+		for (std::size_t const upstreamIndex: utl::reverse(NetworkTraversalView(network, nodeIndex))) {
+			if (upstreamIndex != nodeIndex &&
+				!builtNodes.contains(network->IDFromIndex(upstreamIndex)))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	utl::vector<utl::UUID> BuildSystem::performSanityChecks(Network const* network,

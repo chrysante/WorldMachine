@@ -9,6 +9,7 @@
 #include <utl/UUID.hpp>
 #include <string>
 #include <array>
+#include <optional>
 
 #include "Pin.hpp"
 #include "SharedNetworkTypes.hpp"
@@ -24,9 +25,9 @@ namespace worldmachine {
 		NodeCategory category;
 		std::string name;
 		NodePinDescriptorArray pinDescriptorArray;
-		// not to be set by implementations
+		// Not to be set by Plugins
 		mtl::float3 position;
-		ImplementationID implementationID;
+		std::optional<ImplementationID> implementationID;
 	};
 	
 	UTL_SOA_TYPE(Node,
@@ -42,44 +43,7 @@ namespace worldmachine {
 				 (NodePinDescriptorArray,       pinDescriptorArray)
 				 );
 	
-//	struct Node {
-//		using Name                     = utl::named_type<std::string,	struct NameTag>;
-//		using Category                 = NodeCategory;
-//		using Position                 = utl::named_type<mtl::float3,	struct PositionTag>;
-//		using Size                     = utl::named_type<mtl::float2,	struct SizeTag>;
-//		using BuildProgress            = utl::named_type<float,         struct BuildProgressTag>;
-//		using PinCount                 = worldmachine::PinCount<>;
-//		using Flags                    = NodeFlags;
-//		using ID                       = utl::named_type<utl::UUID,		struct IDTag>;;
-//		using Implementation           = utl::ref<NodeImplementation>;
-//		using PinDescriptorArray       = NodePinDescriptorArray;
-//	};
-//	
-//	
-//	using NodeSOAType = std::tuple<
-//		Node::Name,
-//		Node::Category,
-//		Node::Position,
-//		Node::Size,
-//		Node::BuildProgress,
-//		Node::PinCount,
-//		Node::Flags,
-//		Node::ID,
-//		Node::Implementation,
-//		Node::PinDescriptorArray
-//	>;
-	
-	inline mtl::float2 nodeSize(NodeParameters nodeParams, PinCount<float> pinCount) {
-		float const x = [&]{
-			auto const iCount = std::max(pinCount.parameterInput, 3.0f);
-			return iCount * nodeParams.parameterPinSpacing + 2.0f * nodeParams.cornerRadius;
-		}();
-		float const y = [&]{
-			auto const iCount = std::max({ pinCount.input, pinCount.output, 1.0f });
-			return iCount * nodeParams.pinSpacing + 2.0f * nodeParams.cornerRadius;
-		}();
-		return { x, y };
-	}
+	mtl::float2 nodeSize(NodeParameters, PinCount<float>);
 
 	PinCount<> calculatePinCount(NodeDescriptor const&);
 	

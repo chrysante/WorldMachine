@@ -202,6 +202,26 @@ postbuildcommands {
 }
 
 -----------------------------------------------------------------------------------------
+-- Project WMPlayground
+-----------------------------------------------------------------------------------------
+project "WMPlayground"
+location "Playground"
+kind "ConsoleApp"
+language "C++"
+
+files { 
+    "Playground/**.hpp",
+    "Playground/**.cpp"
+}
+
+links { 
+    "WMCore",
+    "Utility",
+    "ImGui",
+    "YAML"
+}
+
+-----------------------------------------------------------------------------------------
 -- Project Utility
 -----------------------------------------------------------------------------------------
 include "Utility/utility_project.lua"

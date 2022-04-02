@@ -10,6 +10,7 @@
 #include "Core/GlobalMessenger.hpp"
 
 #include "NodeImplementation.hpp"
+#include "NetworkTraversal.hpp"
 
 using namespace mtl::short_types;
 
@@ -28,17 +29,6 @@ namespace worldmachine {
 		utl::unique_ref<NodeImplementation> impl = Registry::instance().createNodeImplementation(desc.implementationID, nodeID);
 		desc.position.z = (float)nodes.size();
 		
-//		nodes.push_back(desc.name,
-//						  desc.category,
-//						  desc.position,
-//						  nodeSize(m_nodeParams, pinCount),
-//						  0.0f /* buildProgress */,
-//						  pinCount,
-//						  NodeFlags::none,
-//						  nodeID,
-//						  std::move(impl),
-//						  desc.pinDescriptorArray);
-		
 		Node elem = {
 			.name               = desc.name,
 			.category           = desc.category,
@@ -54,7 +44,6 @@ namespace worldmachine {
 		
 		nodes.push_back(elem);
 		
-
 		std::size_t const nodeIndex = nodes.size() - 1;
 		return nodeIndex;
 	}
@@ -189,9 +178,8 @@ namespace worldmachine {
 	
 	/// MARK: - Modification and interaction
 	NetworkHitResult Network::hitTest(mtl::float2 hitPosition) const {
-		
 		// test nodes
-		for (std::size_t nodeIndex = 0;
+		for (std::size_t nodeIndex = nodes.size() - 1;
 			 auto [nodePosition, nodeSize, nodeCategory, nodePinCount]:
 			 utl::reverse(nodes.view<Node::members::position, Node::members::size, Node::members::category, Node::members::pinCount>()))
 		{
@@ -201,7 +189,8 @@ namespace worldmachine {
 			if (auto const pin = pinHitTest(hitPosition,
 											nodePosition.xy,
 											nodeSize,
-											nodePinCount)) {
+											nodePinCount))
+			{
 				NetworkHitResult result;
 				result.type = NetworkHitResult::Type::pin;
 				result.node = {
@@ -211,8 +200,7 @@ namespace worldmachine {
 				result.pin = *pin;
 				return result;
 			}
-
-
+			
 			// test collision with node
 			if (do_intersect(nodeBox, hitPosition)) {
 				NetworkHitResult result;
@@ -224,7 +212,7 @@ namespace worldmachine {
 				return result;
 			}
 			
-			++nodeIndex;
+			--nodeIndex;
 		}
 		
 
@@ -254,21 +242,21 @@ namespace worldmachine {
 	std::optional<NetworkHitResult::Pin> Network::pinHitTest(mtl::float2 hitPosition,
 															 mtl::float2 nodePosition,
 															 mtl::float2 nodeSize,
-															 PinCount<> ifCount) const
+															 PinCount<> pinCount) const
 	{
-		auto const testPin = [&](PinKind ifKind) -> std::optional<NetworkHitResult::Pin> {
-			for (std::size_t i = 0; i < ifCount.get(ifKind); ++i) {
+		auto const testPin = [&](PinKind pinKind) -> std::optional<NetworkHitResult::Pin> {
+			for (std::size_t i = 0; i < pinCount.get(pinKind); ++i) {
 				auto const pin = this->pinDisk(nodePosition,
-														   nodeSize,
-														   ifKind,
-														   i,
-														   this->nodeParams());
+											   nodeSize,
+											   pinKind,
+											   i,
+											   this->nodeParams());
 				
 				if (do_intersect(pin, hitPosition)) {
 					return NetworkHitResult::Pin{
 						.position = pin.origin,
 						.index = i,
-						.kind = ifKind
+						.kind = pinKind
 					};
 				}
 			}
@@ -374,16 +362,15 @@ namespace worldmachine {
 			.proxy          = makeEdgeProxy(from, to)
 		});
 		
-		try {
-			traverseDownstreamNodes(to.nodeIndex, [](auto){});
-		}
-		catch ([[maybe_unused]] NetworkCycleError const& e) {
-			this->edges.pop_back();
+		if (hasCycles(this, to.nodeIndex)) {
+			edges.pop_back();
 			if (removedEdge) {
-				this->edges.push_back(*removedEdge);
+				/// If we removed an Edge to make room for this one then restore it
+				edges.push_back(*removedEdge);
 			}
 			throw NetworkCycleError("Edge would introduce a cycle.");
 		}
+		
 		invalidateNodesDownstream(to.nodeIndex);
 	}
 	
@@ -609,8 +596,7 @@ namespace worldmachine {
 	void Network::invalidateNodesDownstream(std::size_t nodeIndex, BuildType type) {
 		WM_BoundsCheck(nodeIndex, 0, nodes.size());
 		
-		traverseDownstreamNodes(nodeIndex, [&, this](std::size_t downstreamNodeIndex) {
-			WM_Log(debug, "Invalidating '{}'", nodes[downstreamNodeIndex].name);
+		for (std::size_t const downstreamNodeIndex: NetworkTraversalView(this, nodeIndex)) {
 			if (test(type & BuildType::highResolution)) {
 				nodes[downstreamNodeIndex].flags &= ~NodeFlags::built;
 				nodes[downstreamNodeIndex].implementation->_built = false;
@@ -619,7 +605,7 @@ namespace worldmachine {
 				nodes[downstreamNodeIndex].flags &= ~NodeFlags::previewBuilt;
 				nodes[downstreamNodeIndex].implementation->_previewBuilt = false;
 			}
-		});
+		}
 	}
 	
 	void Network::invalidateNodesDownstream(utl::UUID nodeID, BuildType type) {
@@ -714,19 +700,13 @@ namespace worldmachine {
 	}
 	
 	bool Network::allMandatoryUpstreamNodesConnected(std::size_t nodeIndex) const {
-		struct DummyException{};
-		try {
-			traverseUpstreamNodes(nodeIndex, [this](std::size_t upstreamIndex) {
-				auto const nodeEdges = collectNodeEdges(upstreamIndex);
-				if (!nodeEdges.dependenciesConnected()) {
-					throw DummyException{};
-				}
-			});
-			return true;
+		for (std::size_t const upstreamIndex: utl::reverse(NetworkTraversalView(this, nodeIndex))) {
+			auto const nodeEdges = collectNodeEdges(upstreamIndex);
+			if (!nodeEdges.dependenciesConnected()) {
+				return true;
+			}
 		}
-		catch (DummyException) {
-			return false;
-		}
+		return true;
 	}
 	
 	

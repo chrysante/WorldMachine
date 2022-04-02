@@ -1,8 +1,5 @@
 #include "Node.hpp"
 
-
-
-
 namespace worldmachine {
 	
 	NodeParameters defaultNodeParameters() {
@@ -19,6 +16,18 @@ namespace worldmachine {
 			.shadowIntensity           = 0.75,
 			.unbuiltColor              = mtl::float3(1, 0, 0)
 		};
+	}
+	
+	mtl::float2 nodeSize(NodeParameters nodeParams, PinCount<float> pinCount) {
+		float const x = [&]{
+			auto const iCount = std::max(pinCount.parameterInput, 3.0f);
+			return iCount * nodeParams.parameterPinSpacing + 2.0f * nodeParams.cornerRadius;
+		}();
+		float const y = [&]{
+			auto const iCount = std::max({ pinCount.input, pinCount.output, 1.0f });
+			return iCount * nodeParams.pinSpacing + 2.0f * nodeParams.cornerRadius;
+		}();
+		return { x, y };
 	}
 	
 	PinCount<> calculatePinCount(NodeDescriptor const& desc) {
