@@ -63,12 +63,13 @@ namespace worldmachine {
 		}
 	}
 	
-	bool hasCycles(Network* network, std::size_t beginIndex) {
+	bool hasCycles(Network const* network, std::size_t beginIndex) {
 		auto view = NetworkTraversalView(network, beginIndex);
 		for (auto i = view.begin(); i != view.end(); ++i) {
-			auto& stack = i.ancestors.container();
-			auto const begin = stack.begin();
-			auto const end = stack.end() - 1;
+			auto& container = utl::get_container(i.ancestors);
+			auto const begin = container.begin();
+			auto const end = container.end() - 1; /* -1 because the last element is always our current index */
+			WM_Assert(*end == *i);
 			if (std::find(begin, end, *i) != end) {
 				// we have a cycle
 				return true;

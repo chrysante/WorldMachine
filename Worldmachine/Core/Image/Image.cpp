@@ -1,6 +1,7 @@
 #include "Image.hpp"
 
 #include <utl/hash.hpp>
+#include <utl/iterator.hpp>
 
 namespace worldmachine {
 	
@@ -9,12 +10,11 @@ namespace worldmachine {
 			summands = 1;
 		}
 		std::size_t const stride = std::max<long>((long)std::bit_floor(data.size()) / (long)summands - 1, 1);
-		std::size_t result = 0;
-		for (auto i = data.begin(); i < data.end(); i += stride) {
-			auto const x = utl::bit_cast<std::uint32_t>(*i);
-			result = utl::hash_combine(result, x);
-		}
-		return result;
+		
+		auto convert = [](float x) { return utl::bit_cast<std::uint32_t>(x); };
+		
+		return utl::hash_combine_range(utl::conversion_iterator(utl::stride_iterator(data.begin(), stride), convert),
+									   data.begin() + utl::round_down(data.size(), stride));
 	}
 	
 	Image::Image(DataType dataType, mtl::uint2 size):

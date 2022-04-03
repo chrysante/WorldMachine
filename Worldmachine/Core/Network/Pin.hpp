@@ -7,6 +7,7 @@
 #include <ostream>
 
 #include "Core/Base.hpp"
+#include "Core/Debug.hpp"
 #include "Core/DataType.hpp"
 
 namespace worldmachine {
@@ -77,8 +78,8 @@ namespace worldmachine {
 		utl::small_vector<PinDescriptor, 8> parameterInput;
 		utl::small_vector<PinDescriptor, 2> maskInput;
 		
-		utl::vector<PinDescriptor> const& get(PinKind ifKind) const {
-			switch (ifKind) {
+		utl::vector<PinDescriptor> const& get(PinKind pinKind) const {
+			switch (pinKind) {
 				case PinKind::input:
 					return input;
 				case PinKind::output:
@@ -87,12 +88,20 @@ namespace worldmachine {
 					return parameterInput;
 				case PinKind::maskInput:
 					return maskInput;
-				default: throw;
+				default:
+					WM_DebugBreak();
 			}
 		}
 		
-		utl::vector<PinDescriptor>& get(PinKind ifKind) {
-			return utl::as_mutable(utl::as_const(*this).get(ifKind));
+		utl::vector<PinDescriptor>& get(PinKind pinKind) {
+			return utl::as_mutable(utl::as_const(*this).get(pinKind));
+		}
+		
+		utl::vector<PinDescriptor>& operator[](PinKind pinKind) {
+			return get(pinKind);
+		}
+		utl::vector<PinDescriptor> const& operator[](PinKind pinKind) const {
+			return get(pinKind);
 		}
 	};
 	
@@ -102,9 +111,6 @@ template <>
 class std::hash<worldmachine::PinDescriptor> {
 public:
 	std::size_t operator()(worldmachine::PinDescriptor const& desc) const {
-		std::size_t seed = 0x5f23ef3b;
-		seed = utl::hash_combine(seed, desc.name());
-		seed = utl::hash_combine(seed, desc.mandatory());
-		return seed;
+		return utl::hash_combine(desc.name(), desc.mandatory());
 	}
 };

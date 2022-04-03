@@ -18,17 +18,6 @@
 #endif
 
 namespace worldmachine {
-
-	template <typename T>
-	bool checkThrows(utl::invocable auto&& f) {
-		try {
-			f();
-			return false;
-		}
-		catch (T const&) {
-			return true;
-		}
-	}
 	
 	static void pruneIllFormedNodes(Network const* network, utl::vector<utl::UUID>* nodeIDs) {
 		auto& ids = *nodeIDs;

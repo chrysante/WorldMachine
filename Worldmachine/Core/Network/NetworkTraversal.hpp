@@ -12,10 +12,10 @@ namespace worldmachine {
 	
 	class Network;
 	
-	bool hasCycles(Network* network, std::size_t beginIndex);
+	bool hasCycles(Network const* network, std::size_t beginIndex);
 	
 	class NetworkIterator {
-		friend bool hasCycles(Network*, std::size_t);
+		friend bool hasCycles(Network const*, std::size_t);
 		using IndexType = std::uint16_t; // to keep the structure small
 		
 	public:
@@ -58,15 +58,8 @@ namespace worldmachine {
 		};
 		
 	private:
-		template <typename T>
-		struct Stack: std::stack<T, utl::small_vector<T>> {
-			using Base = std::stack<T, utl::small_vector<T>>;
-			using typename Base::container_type;
-			container_type& container() { return this->c; }
-			container_type const& container() const { return this->c; }
-		};
 		utl::vector<EdgeRep> edges;
-		Stack<IndexType> ancestors;
+		std::stack<IndexType, utl::small_vector<IndexType>> ancestors;
 		utl::vector<bool> visited;
 		bool traverseUnique;
 	};
@@ -95,16 +88,14 @@ namespace worldmachine {
 		}
 		NetworkIterator::Sentinel rend() const { return {}; }
 		
-		
-		NetworkTraversalView& unique()& {
+		/*
+		 Only operate on temporaries and return by value
+		 to work well with range-based for loops.
+		 */
+		NetworkTraversalView unique()&& {
 			traverseUnique = true;
 			return *this;
 		}
-		NetworkTraversalView&& unique()&& {
-			unique();
-			return std::move(*this);
-		}
-		
 		
 	private:
 		Network const* network;

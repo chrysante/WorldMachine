@@ -4,7 +4,6 @@
 
 #include <mtl/mtl.hpp>
 
-#include <utl/named_type.hpp>
 #include <utl/memory.hpp>
 #include <utl/structure_of_arrays.hpp>
 #include <utl/functional.hpp>
@@ -245,13 +244,7 @@ namespace worldmachine {
 	};
 	
 	struct NodeEdges {
-		struct EdgeRepresentation {
-			std::size_t   beginNodeIndex = -1;
-			std::size_t   beginPinIndex = -1;
-			PinKind       beginPinKind = PinKind::none;
-			std::size_t   endNodeIndex = -1;
-			std::size_t   endPinIndex = -1;
-			PinKind       endPinKind = PinKind::none;
+		struct EdgeRepresentation: Edge {
 			bool present = false;
 			bool mandatory = true;
 		};
@@ -260,18 +253,18 @@ namespace worldmachine {
 		utl::small_vector<EdgeRepresentation, 2> maskInputEdges;
 		
 		bool dependenciesConnected() const {
-			return [&](auto const&... ec){
-				mtl::vector/*<bool, sizeof...(ec)>*/ result([&] {
-					for (auto& edge : ec) {
-						if (!edge.present && edge.mandatory) {
-							return false;
-						}
-					}
-					return true;
-					}()...);
-				return result.fold(utl::logical_and);
-			}(inputEdges, maskInputEdges);
+			return dependenciesConnectedImpl(inputEdges) && dependenciesConnectedImpl(maskInputEdges);
 		}
+		
+	private:
+		static bool dependenciesConnectedImpl(std::span<EdgeRepresentation const> ec) {
+			for (EdgeRepresentation const& edge : ec) {
+			   if (!edge.present && edge.mandatory) {
+				   return false;
+			   }
+		   }
+		   return true;
+	   }
 	};
 	
 	/// MARK: - Network
@@ -330,7 +323,7 @@ namespace worldmachine {
 		
 		std::optional<std::size_t> edgeInPin(PinIndex const&) const;
 		
-		utl::small_vector<std::size_t> _gatherNodesImpl(auto&& cond);
+		utl::small_vector<std::size_t> gatherNodesImpl(auto&& cond);
 		
 		template <bool Reverse>
 		static void _traverseUpstreamNodesStartImpl(auto* _this, std::size_t nodeIndex, utl::invocable<std::size_t> auto&& f);

@@ -3,7 +3,6 @@
 #include "Framework/Typography/TextRenderData.hpp"
 
 #include <utl/structure_of_arrays.hpp>
-#include <utl/named_type.hpp>
 #include <utl/memory.hpp>
 #include <mtl/mtl.hpp>
 #include <utl/UUID.hpp>

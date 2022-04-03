@@ -40,6 +40,12 @@ namespace worldmachine {
 		float* data() { return m_data.data(); }
 		float const* data() const { return m_data.data(); }
 		
+		std::span<float> toFloatSpan() {
+			auto const result = utl::as_const(*this).toFloatSpan();
+			return { const_cast<float*>(result.data()), result.size() };
+		}
+		std::span<float const> toFloatSpan() const { return { data(), size().fold(utl::multiplies) }; }
+		
 		auto begin() { return m_data.begin(); }
 		auto begin() const { return m_data.begin(); }
 		auto end() { return m_data.end(); }
@@ -55,10 +61,10 @@ namespace worldmachine {
 	};
 	
 	/// MARK: ImageView
-	template <typename> class ImageView;
+	template <typename>
+	class ImageView;
 	
 	template <typename VT>
-//	requires utl::any_of<typename mtl::get_underlying_type<VT>::type, float,  float const>
 	class ImageView {
 		using T = typename mtl::get_underlying_type<VT>::type;
 		static constexpr bool _isConst = std::is_const_v<VT>;

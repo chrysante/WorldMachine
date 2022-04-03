@@ -31,7 +31,9 @@ namespace worldmachine {
 }
 namespace {
 	
-	static std::uint32_t indexOfVertexAt(std::size_t i, std::size_t j, usize2 const& vertexResolution) {
+	static std::uint32_t indexOfVertexAt(std::size_t i, std::size_t j,
+										 usize2 const& vertexResolution)
+	{
 		return static_cast<std::uint32_t>(j * vertexResolution.x + i);
 	}
 	
