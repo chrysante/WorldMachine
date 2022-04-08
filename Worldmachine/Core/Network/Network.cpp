@@ -58,30 +58,30 @@ namespace worldmachine {
 		
 		switch (pinKind) {
 			case PinKind::input: {
-				auto const pX = nodeBounds.origin.x;
+				auto const pX = nodeBounds.bottom_left().x;
 				
-				auto const pY = nodeBounds.origin.y + nodeBounds.extend.y - nodeParams.cornerRadius - (pinIndex + 0.5f) * nodeParams.pinSpacing;
+				auto const pY = nodeBounds.top_right().y - nodeParams.cornerRadius - (pinIndex + 0.5f) * nodeParams.pinSpacing;
 				
 				return { pX, pY };
 			}
 			case PinKind::output: {
-				auto const pX = nodeBounds.origin.x + nodeBounds.extend.x;
+				auto const pX = nodeBounds.top_right().x;
 				
-				auto const pY = nodeBounds.origin.y + nodeBounds.extend.y - nodeParams.cornerRadius - (pinIndex + 0.5f) * nodeParams.pinSpacing;
+				auto const pY = nodeBounds.top_right().y - nodeParams.cornerRadius - (pinIndex + 0.5f) * nodeParams.pinSpacing;
 				
 				return { pX, pY };
 			}
 			case PinKind::parameterInput: {
-				auto const pX = nodeBounds.origin.x + nodeParams.cornerRadius + (pinIndex + 0.5f) * nodeParams.parameterPinSpacing;
+				auto const pX = nodeBounds.bottom_left().x + nodeParams.cornerRadius + (pinIndex + 0.5f) * nodeParams.parameterPinSpacing;
 				
-				auto const pY = nodeBounds.origin.y + nodeBounds.extend.y;
+				auto const pY = nodeBounds.top_right().y;
 				
 				return { pX, pY };
 			}
 			case PinKind::maskInput: {
-				auto const pX = nodeBounds.origin.x + nodeParams.cornerRadius + (pinIndex + 0.5f) * nodeParams.pinSpacing;
+				auto const pX = nodeBounds.bottom_left().x + nodeParams.cornerRadius + (pinIndex + 0.5f) * nodeParams.pinSpacing;
 				
-				auto const pY = nodeBounds.origin.y;
+				auto const pY = nodeBounds.bottom_left().y;
 				
 				return { pX, pY };
 			}
@@ -253,7 +253,7 @@ namespace worldmachine {
 				
 				if (do_intersect(pin, hitPosition)) {
 					return NetworkHitResult::Pin{
-						.position = pin.origin,
+						.position = pin.origin(),
 						.index = i,
 						.kind = pinKind
 					};
